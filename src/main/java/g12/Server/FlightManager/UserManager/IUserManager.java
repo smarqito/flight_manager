@@ -1,5 +1,7 @@
 package g12.Server.FlightManager.UserManager;
 
+import g12.Server.FlightManager.Exceptions.UserIsNotClient;
+
 public interface IUserManager {
 
 	/**
@@ -27,13 +29,13 @@ public interface IUserManager {
 	 * @param user
 	 * @param idR
 	 */
-	void addReserva(String user, String idR);
+	void addReserva(String user, String idR) throws UserIsNotClient;
 
 	/**
 	 * 
 	 * @param user
 	 * @param idR
 	 */
-	void removeReserva(String user, String idR);
+	void removeReserva(String user, String idR) throws UserIsNotClient;
 
 }

@@ -1,5 +1,6 @@
 package g12.Server.FlightManager.UserManager;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class Client extends User {
@@ -9,27 +10,58 @@ public class Client extends User {
 	 */
 	private Set<String> reservas;
 
+	public Client(){
+		this.reservas=new HashSet<>();
+	}
+
+	public Client(Set<String> rvs){
+		setReservas(rvs);
+	}
+
+	public Client(Client c){
+		this.reservas = c.getReservas();
+	}
+
 	public Set<String> getReservas() {
-		return this.reservas;
+		return new HashSet<>(this.reservas);
+	}
+
+	public void setReservas(Set<String> reservas) {
+		this.reservas = new HashSet<>(reservas);
 	}
 
 	/**
 	 * Adiciona uma reserva ao Set de reservas
-	 * @param id
+	 * @param id Identificador a adicionar
 	 */
 	public void addReserva(String id) {
-		// TODO - implement Client.addReserva
-		throw new UnsupportedOperationException();
+		this.reservas.add(id);
 	}
 
 	/**
+	 * Remove uma reserva ao Set de reservas
+	 * @param id Identificador a remover
+	 */
+	public void removeReserva(String id) {
+		this.reservas.remove(id);
+	}
+	/**
 	 * Verifica se o ID recebido se encontra no Set de reservas
 	 * @param id Identificador que se procura
-	 * @param id
 	 */
 	public Boolean hasReserva(String id) {
-		// TODO - implement Client.hasReserva
-		throw new UnsupportedOperationException();
+		return this.reservas.contains(id);
 	}
 
+	@Override
+	public User clone() {
+		return new Client(this);
+	}
+
+	@Override
+	public String toString() {
+		return "Client{" +
+				"reservas=" + reservas +
+				'}';
+	}
 }
