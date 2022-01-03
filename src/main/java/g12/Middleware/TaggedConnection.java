@@ -81,5 +81,4 @@ public class TaggedConnection implements AutoCloseable {
 	public void close() throws IOException {
 		s.close();
 	}
-
 }

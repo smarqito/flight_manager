@@ -16,17 +16,13 @@ public class Server {
 	 */
 	public static void main(String[] args) throws IOException {
 		ServerSocket ss = new ServerSocket(4444);
-		IFlightManager model = new FlightManagerFacade();
-		try {
-			IFlightManager.class.getMethod("login", String.class, String.class);
-		} catch (NoSuchMethodException | SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		while (true) {
-			Socket s = ss.accept();
-			TaggedConnection tg = new TaggedConnection(s);
-			new Thread(new ServerWorker(tg, model)).start();
+		try (ss) {
+			IFlightManager model = new FlightManagerFacade();
+			while (true) {
+				Socket s = ss.accept();
+				TaggedConnection tg = new TaggedConnection(s);
+				new Thread(new ServerWorker(tg, model)).start();
+			}
 		}
 	}
 
