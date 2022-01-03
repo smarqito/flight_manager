@@ -1,41 +1,42 @@
 package g12.Server.FlightManager.UserManager;
 
 import g12.Server.FlightManager.Exceptions.UserIsNotClient;
+import g12.Server.FlightManager.Exceptions.UserNaoExistente;
 
 public interface IUserManager {
 
 	/**
-	 * 
-	 * @param user
-	 * @param pass
+	 * Verifica é possível um utilizador fazer o login
+	 * @param user Identificador do utilizador
+	 * @param pass Palavra-pass do utilizador
 	 */
-	Boolean checkLogin(String user, String pass);
+	Boolean checkLogin(String user, String pass) throws UserNaoExistente;
 
 	/**
-	 * 
-	 * @param user
+	 * Verifica se o utilizador existe
+	 * @param user Identificador do utilizador
 	 */
 	Boolean hasUser(String user);
 
 	/**
-	 * 
-	 * @param user
-	 * @param pass
+	 * Adiciona um utilizador
+	 * @param user Identificador do utilizador
+	 * @param pass Palavra-pass do utilizador
 	 */
-	void addUser(String user, String pass);
+	void addUser(String user, String pass) throws UserNaoExistente;
 
 	/**
-	 * 
-	 * @param user
-	 * @param idR
+	 * Adiciona uma reserva
+	 * @param user Identificador do utilizador
+	 * @param idR Identificador da reserva
 	 */
-	void addReserva(String user, String idR) throws UserIsNotClient;
+	void addReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente;
 
 	/**
-	 * 
-	 * @param user
-	 * @param idR
+	 * Remove uma reserva
+	 * @param user Identificador do utilizador
+	 * @param idR Identificador da reserva
 	 */
-	void removeReserva(String user, String idR) throws UserIsNotClient;
+	void removeReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente;
 
 }

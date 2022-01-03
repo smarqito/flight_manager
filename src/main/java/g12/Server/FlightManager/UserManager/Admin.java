@@ -5,9 +5,13 @@ package g12.Server.FlightManager.UserManager;
  */
 public class Admin extends User {
 
-    public Admin(){};
+    public Admin(String nome, String pass){
+        super(nome, pass);
+    }
 
-    public Admin(Admin ad){}
+    public Admin(Admin ad){
+        super(ad);
+    }
 
     @Override
     public User clone() {

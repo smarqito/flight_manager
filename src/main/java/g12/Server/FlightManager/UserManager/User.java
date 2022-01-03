@@ -7,18 +7,19 @@ public abstract class User {
 	private String nome;
 	private String pass;
 
+	public User(String nome, String pass) {
+		this.nome = nome;
+		this.pass = pass;
+	}
+
+	public User(User u){
+		this(u.nome, u.pass);
+	}
+
 	public String getNome() {
 		return this.nome;
 	}
-
-	public void setNome(String novoNome){
-		this.nome=novoNome;
-	}
-
-	public String getPass() {
-		return this.pass;
-	}
-
+	
 	public void setPass(String novaPass) {
 		this.pass = novaPass;
 	}
