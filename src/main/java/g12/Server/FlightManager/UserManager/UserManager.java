@@ -10,61 +10,68 @@ import java.util.concurrent.locks.ReentrantLock;
 public class UserManager implements IUserManager {
 
 	private Map<String, User> users;
-	private Lock lock = new ReentrantLock();
+	private Lock lockUM = new ReentrantLock();
 
-	/**
-	 * Verifica é possível um utilizador fazer o login
-	 * @param user Identificador do utilizador
-	 * @param pass Palavra-pass do utilizador
-	 */
-	public Boolean checkLogin(String user, String pass) {
-		return getUser(user).isPassValid(pass);
+	public Boolean checkLogin(String user, String pass) throws UserNaoExistente {
+		lockUM.lock();
+		try {
+			return getUser(user).isPassValid(pass);
+		}
+		finally {
+			lockUM.unlock();
+		}
 	}
 
-	/**
-	 * Verifica se o utilizador existe
-	 * @param user Identificador do utilizador
-	 */
 	public Boolean hasUser(String user) {
 		return this.users.containsKey(user);
 	}
 
-	/**
-	 * Adiciona um utilizador
-	 * @param user Identificador do utilizador
-	 * @param pass Palavra-pass do utilizador
-	 */
-	public void addUser(String user, String pass) {
-		this.users.put(user, getUser(user));
-		getUser(user).setPass(pass);
+	public void addUser(String user, String pass) throws UserNaoExistente {
+		lockUM.lock();
+		try {
+			this.users.put(user, getUser(user));
+			getUser(user).setPass(pass);
+		}
+		finally {
+			lockUM.unlock();
+		}
 	}
 
-	/**
-	 * Adiciona uma reserva
-	 * @param user Identificador do utilizador
-	 * @param idR Identificador da reserva
-	 */
-	public void addReserva(String user, String idR) throws UserIsNotClient {
-		if(!(getUser(user) instanceof Client)) throw new UserIsNotClient();
-		((Client) getUser(user)).addReserva(idR);
+	public void addReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente {
+		lockUM.lock();
+		try {
+			if (!(getUser(user) instanceof Client)) throw new UserIsNotClient();
+			((Client) getUser(user)).addReserva(idR);
+		}
+		finally {
+			lockUM.unlock();
+		}
 	}
 
-	/**
-	 * Remove uma reserva
-	 * @param user Identificador do utilizador
-	 * @param idR Identificador da reserva
-	 */
-	public void removeReserva(String user, String idR) throws UserIsNotClient{
-		if(!(getUser(user) instanceof Client)) throw new UserIsNotClient();
-		((Client) getUser(user)).removeReserva(idR);
+	public void removeReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente {
+		lockUM.lock();
+		try {
+			if (!(getUser(user) instanceof Client)) throw new UserIsNotClient();
+			((Client) getUser(user)).removeReserva(idR);
+		}
+		finally {
+			lockUM.unlock();
+		}
 	}
 
 	/**
 	 * Devolve o utilizador
 	 * @param user Identificador do utilizador
 	 */
-	public User getUser(String user) {
-		return this.users.get(user).clone();
+	public User getUser(String user) throws UserNaoExistente {
+		lockUM.lock();
+		try{
+			if(!this.users.containsKey(user)) throw new UserNaoExistente("Utilizador "+user+" não existe.");
+			return this.users.get(user).clone();
+		}
+		finally {
+			lockUM.unlock();
+		}
 	}
 
 }

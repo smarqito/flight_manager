@@ -10,15 +10,13 @@ public class Client extends User {
 	 */
 	private Set<String> reservas;
 
-	public Client(){
-		this.reservas=new HashSet<>();
-	}
-
-	public Client(Set<String> rvs){
-		setReservas(rvs);
+	public Client(String nome, String pass) {
+		super(nome, pass);
+		this.reservas = new HashSet<>();
 	}
 
 	public Client(Client c){
+		super(c);
 		this.reservas = c.getReservas();
 	}
 

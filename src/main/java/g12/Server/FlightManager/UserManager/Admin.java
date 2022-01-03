@@ -5,9 +5,9 @@ package g12.Server.FlightManager.UserManager;
  */
 public class Admin extends User {
 
-    public Admin(){};
-
-    public Admin(Admin ad){}
+    public Admin(Admin ad){
+        super(ad);
+    }
 
     @Override
     public User clone() {
