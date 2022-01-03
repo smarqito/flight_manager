@@ -38,38 +38,62 @@ public class ServerWorker implements Runnable {
 	}
 
 	public void requestHandler(TaggedConnection.Frame f) {
-		try {
-			IFlightManager.class.getMethod("login");
-		} catch (NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
+		Query q = new Query("method", 0);
+		switch (q.getMethod()) {
+			case "login":
+				break;
+			case "registerUser":
+				break;
+			case "registerFlight":
+				break;
+			case "closeDay":
+				break;
+			case "bookFlight":
+				break;
+			case "cancelBook":
+				break;
+			case "availableFlights":
+				break;
+			default:
+				// responder pedido mal feito;
+				// erro 400
+				break;
 		}
 	}
 
-	public void loginHandler() {
+	public void checkToken(String token) {
+		// add verify token to flight Manager
+	}
+
+	public void loginHandler(Query q) throws BadRequest {
+		Params p = q.getParams();
+		if(p.size() == 2) {
+			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
+		}
+		model.login(p.get(0), p.get(1)); // colocar o login a retornar uma string que sera o token
+	}
+
+	public void registerUser(Query q) {
 
 	}
 
-	public void registerUser() {
+	public void registerFlight(Query q) {
 
 	}
 
-	public void registerFlight() {
+	public void closeDay(Query q) {
 
 	}
 
-	public void closeDay() {
+	public void bookFlight(Query q) {
 
 	}
 
-	public void bookFlight() {
+	public void cancelBook(Query q) {
 
 	}
 
-	public void cancelBook() {
-
-	}
-
-	public void availableFlights() {
+	public void availableFlights(Query q) {
 
 	}
 
