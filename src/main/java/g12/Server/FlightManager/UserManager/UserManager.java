@@ -123,7 +123,7 @@ public class UserManager implements IUserManager {
 	}
 
 	@Override
-	public Boolean hasReserva(String user, String id) throws UserNaoExistente {
+	public Boolean hasReserva(String user, String id) throws UserNaoExistente, UserIsNotClient {
 		this.lock.lock();
 		User u;
 		try {
@@ -132,12 +132,15 @@ public class UserManager implements IUserManager {
 		} finally {
 			this.lock.unlock();
 		}
-
 		try {
-			u.
+			if (isClient(u)) {
+				Client c = (Client) u;
+				return c.hasReserva(id);
+			}
 		} finally {
 			u.lock.unlock();
 		}
+		throw new UserIsNotClient();
 	}
 
 	@Override
