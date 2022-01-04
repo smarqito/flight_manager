@@ -1,7 +1,6 @@
 package g12.Server.FlightManager.BookingManager;
 
 import java.util.Objects;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
