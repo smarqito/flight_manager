@@ -20,8 +20,6 @@ public class Voo {
 	private Integer lugaresOcupados;
 	private Integer capacidade;
 
-	// private Condition cond = this.lock.newCondition();
-
 	/**
 	 * Nao lhe associa um ID
 	 * 
