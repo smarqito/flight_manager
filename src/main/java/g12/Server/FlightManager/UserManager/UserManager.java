@@ -103,13 +103,22 @@ public class UserManager implements IUserManager {
 
 	@Override
 	public void removeReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente {
-		lock.lock();
+		this.lock.lock();
+		User u;
 		try {
-			if (!(getUser(user) instanceof Client))
-				throw new UserIsNotClient();
-			((Client) getUser(user)).removeReserva(idR);
+			u = getUser(user);
+			u.lock.lock();
 		} finally {
-			lock.unlock();
+			this.lock.unlock();
+		}
+		try {
+			if (!u.getClass().getSimpleName().equals(Client.class.getSimpleName())) {
+				throw new UserIsNotClient();
+			}
+			Client c = (Client) u;
+			c.removeReserva(idR);
+		} finally {
+			u.lock.unlock();
 		}
 	}
 
@@ -130,18 +139,31 @@ public class UserManager implements IUserManager {
 	 * @param user Identificador do utilizador
 	 */
 	private User getUser(String user) throws UserNaoExistente {
-		lock.lock();
+		this.lock.lock();
 		try {
-			if (!this.users.containsKey(user))
-				throw new UserNaoExistente("Utilizador " + user + " não existe.");
-			return this.users.get(user);
+			if (this.users.containsKey(user)) {
+				return this.users.get(user);
+			}
 		} finally {
-			lock.unlock();
+			this.lock.unlock();
 		}
+		throw new UserNaoExistente("Utilizador " + user + " não existe.");
 	}
 
 	public void setToken(String user, String token) throws UserNaoExistente {
-		getUser(user).setToken(token);
+		this.lock.lock();
+		User u;
+		try {
+			u = getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
+		}
+		try {
+			u.setToken(token);
+		} finally {
+			u.lock.unlock();
+		}
 	}
 
 	public String generateToken(String user) {
