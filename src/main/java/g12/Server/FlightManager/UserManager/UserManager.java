@@ -10,15 +10,15 @@ import java.util.concurrent.locks.ReentrantLock;
 public class UserManager implements IUserManager {
 
 	private Map<String, User> users;
-	private Lock lockUM = new ReentrantLock();
+	private Lock lock = new ReentrantLock();
 
 	public Boolean checkLogin(String user, String pass) throws UserNaoExistente {
-		lockUM.lock();
+		lock.lock();
 		try {
 			return getUser(user).isPassValid(pass);
 		}
 		finally {
-			lockUM.unlock();
+			lock.unlock();
 		}
 	}
 
@@ -27,35 +27,35 @@ public class UserManager implements IUserManager {
 	}
 
 	public void addUser(String user, String pass) throws UserNaoExistente {
-		lockUM.lock();
+		lock.lock();
 		try {
 			this.users.put(user, getUser(user));
 			getUser(user).setPass(pass);
 		}
 		finally {
-			lockUM.unlock();
+			lock.unlock();
 		}
 	}
 
 	public void addReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente {
-		lockUM.lock();
+		lock.lock();
 		try {
 			if (!(getUser(user) instanceof Client)) throw new UserIsNotClient();
 			((Client) getUser(user)).addReserva(idR);
 		}
 		finally {
-			lockUM.unlock();
+			lock.unlock();
 		}
 	}
 
 	public void removeReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente {
-		lockUM.lock();
+		lock.lock();
 		try {
 			if (!(getUser(user) instanceof Client)) throw new UserIsNotClient();
 			((Client) getUser(user)).removeReserva(idR);
 		}
 		finally {
-			lockUM.unlock();
+			lock.unlock();
 		}
 	}
 
@@ -64,14 +64,20 @@ public class UserManager implements IUserManager {
 	 * @param user Identificador do utilizador
 	 */
 	public User getUser(String user) throws UserNaoExistente {
-		lockUM.lock();
+		lock.lock();
 		try{
 			if(!this.users.containsKey(user)) throw new UserNaoExistente("Utilizador "+user+" não existe.");
 			return this.users.get(user).clone();
 		}
 		finally {
-			lockUM.unlock();
+			lock.unlock();
 		}
+	}
+
+	@Override
+	public Boolean checkToken(String token) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

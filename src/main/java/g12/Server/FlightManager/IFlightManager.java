@@ -12,7 +12,7 @@ public interface IFlightManager {
 	 * @param user
 	 * @param pass
 	 */
-	Boolean login(String user, String pass);
+	String login(String user, String pass);
 
 	/**
 	 * 
@@ -52,6 +52,16 @@ public interface IFlightManager {
 	 */
 	Boolean cancelBook(String user, Integer id);
 
+	/**
+	 * 
+	 * @return
+	 */
 	List<InfoVoo> availableFlights();
 
+	/**
+	 * 
+	 * @param token
+	 * @return
+	 */
+	Boolean verifyToken(String token);
 }

@@ -1,13 +1,14 @@
 package g12.Server.FlightManager.UserManager;
 
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class User {
 
 	private String nome;
 	private String pass;
-	private ReentrantLock lock;
+	protected Lock lock;
 	private String token;
 
 	public User(String nome, String pass) {

@@ -39,4 +39,11 @@ public interface IUserManager {
 	 */
 	void removeReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente;
 
+	/**
+	 * 
+	 * @param token
+	 * @return
+	 */
+	Boolean checkToken(String token);
+
 }

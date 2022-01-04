@@ -2,6 +2,7 @@ package g12.Server.FlightManager.UserManager;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Client extends User {
 
@@ -15,13 +16,13 @@ public class Client extends User {
 		this.reservas = new HashSet<>();
 	}
 
-	public Client(Client c){
+	public Client(Client c) {
 		super(c);
 		this.reservas = c.getReservas();
 	}
 
 	public Set<String> getReservas() {
-		return new HashSet<>(this.reservas);
+		return this.reservas.stream().collect(Collectors.toSet());
 	}
 
 	public void setReservas(Set<String> reservas) {
@@ -30,6 +31,7 @@ public class Client extends User {
 
 	/**
 	 * Adiciona uma reserva ao Set de reservas
+	 * 
 	 * @param id Identificador a adicionar
 	 */
 	public void addReserva(String id) {
@@ -38,13 +40,16 @@ public class Client extends User {
 
 	/**
 	 * Remove uma reserva ao Set de reservas
+	 * 
 	 * @param id Identificador a remover
 	 */
 	public void removeReserva(String id) {
 		this.reservas.remove(id);
 	}
+
 	/**
 	 * Verifica se o ID recebido se encontra no Set de reservas
+	 * 
 	 * @param id Identificador que se procura
 	 */
 	public Boolean hasReserva(String id) {
