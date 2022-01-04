@@ -3,6 +3,7 @@ package g12.Server.FlightManager;
 import java.time.LocalDate;
 import java.util.List;
 
+import g12.Middleware.TokenInvalido;
 import g12.Server.FlightManager.BookingManager.*;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
 import g12.Server.FlightManager.Exceptions.NotAllowed;
@@ -60,8 +61,10 @@ public interface IFlightManager {
 	 * 
 	 * @param user
 	 * @param id
+	 * @throws UserIsNotClient
+	 * @throws UserNaoExistente
 	 */
-	Boolean cancelBook(String user, String id);
+	Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient;
 
 	/**
 	 * 
@@ -73,6 +76,7 @@ public interface IFlightManager {
 	 * 
 	 * @param token
 	 * @return
+	 * @throws TokenInvalido
 	 */
-	Boolean verifyToken(String token);
+	String verifyToken(String token) throws TokenInvalido;
 }

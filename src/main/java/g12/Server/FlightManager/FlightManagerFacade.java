@@ -2,9 +2,8 @@ package g12.Server.FlightManager;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
+import g12.Middleware.TokenInvalido;
 import g12.Server.FlightManager.BookingManager.*;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
 import g12.Server.FlightManager.Exceptions.NotAllowed;
@@ -17,7 +16,6 @@ public class FlightManagerFacade implements IFlightManager {
 
 	private IBookingManager booking;
 	private IUserManager users;
-	private Lock lock = new ReentrantLock();
 
 	/**
 	 * 
@@ -108,14 +106,12 @@ public class FlightManagerFacade implements IFlightManager {
 	}
 
 	public List<InfoVoo> availableFlights() {
-		// TODO - implement FlightManagerFacade.availableFlights
-		throw new UnsupportedOperationException();
+		return this.booking.getAvailableFlights();
 	}
 
 	@Override
-	public Boolean verifyToken(String token) {
-		// TODO Auto-generated method stub
-		return null;
+	public String verifyToken(String token) throws TokenInvalido {
+		return this.users.checkToken(token);
 	}
 
 }
