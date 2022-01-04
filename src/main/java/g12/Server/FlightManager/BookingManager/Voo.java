@@ -1,17 +1,62 @@
 package g12.Server.FlightManager.BookingManager;
 
+import java.util.Objects;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Voo {
 
-	private Lock lock = new ReentrantLock();
-	private Condition cond = this.lock.newCondition();
+	private static int ID = 1;
+
+	private static int GetID() {
+		return ID++;
+	}
+
+	private Lock lockVoo = new ReentrantLock();
 	private Integer id;
 	private String origem;
 	private String destino;
-	private Integer capacidade;
+	private Integer capacidadeAtual;
+	private Integer capacidadeMax;
+
+	//private Condition cond = this.lock.newCondition();
+
+	/**
+	 * Nao lhe associa um ID
+	 * @param origem
+	 * @param dest
+	 * @param cap
+	 */
+	public Voo(String origem, String dest, Integer cap) {
+		this.lockVoo = new ReentrantLock();
+		this.id=0;
+		this.origem=origem;
+		this.destino=dest;
+		this.capacidadeAtual=0;
+		this.capacidadeMax=cap;
+	}
+
+	/**
+	 * gera um novo ID!
+	 * @param voo
+	 */
+	public Voo(Voo voo) {
+		this.lockVoo=voo.getLockVoo();
+		this.id=GetID();
+		this.origem=voo.getOrigem();
+		this.destino=voo.getDestino();
+		this.capacidadeAtual=voo.getCapacidadeAtual();
+		this.capacidadeMax=voo.getCapacidadeMax();
+	}
+
+	public Lock getLockVoo() {
+		return lockVoo;
+	}
+
+	public void setLockVoo(Lock lockVoo) {
+		this.lockVoo = lockVoo;
+	}
 
 	public Integer getId() {
 		return this.id;
@@ -33,42 +78,52 @@ public class Voo {
 		this.destino = destino;
 	}
 
-	public Integer getCapacidade() {
-		return this.capacidade;
+	public Integer getCapacidadeAtual() {
+		return this.capacidadeAtual;
 	}
 
-	public void setCapacidade(Integer capacidade) {
-		this.capacidade = capacidade;
+	public void setCapacidadeAtual(Integer capacidade) {
+		this.capacidadeAtual = capacidade;
 	}
 
-	/**
-	 * Nao lhe associa um ID
-	 * @param origem
-	 * @param dest
-	 * @param cap
-	 */
-	public Voo(String origem, String dest, Integer cap) {
-		// TODO - implement Voo.Voo
-		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * gera um novo ID!
-	 * @param voo
-	 */
-	public Voo(Voo voo) {
-		// TODO - implement Voo.Voo
-		throw new UnsupportedOperationException();
+	public Integer getCapacidadeMax() {
+		return this.capacidadeMax;
 	}
 
 	public void addUser() {
-		// TODO - implement Voo.addUser
-		throw new UnsupportedOperationException();
+		if(this.capacidadeAtual<this.capacidadeMax) this.capacidadeAtual++;
+	}
+
+	public void removeUser() {
+		if(this.capacidadeAtual>0) this.capacidadeAtual--;
 	}
 
 	public Voo clone() {
-		// TODO - implement Voo.clone
-		throw new UnsupportedOperationException();
+		return new Voo(this);
 	}
 
+	@Override
+	public String toString() {
+		return "Voo{" +
+				"lockVoo=" + lockVoo +
+				", id=" + id +
+				", origem='" + origem + '\'' +
+				", destino='" + destino + '\'' +
+				", capacidadeAtual=" + capacidadeAtual +
+				", capacidadeMax=" + capacidadeMax +
+				'}';
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Voo voo = (Voo) o;
+		return Objects.equals(lockVoo, voo.lockVoo) && Objects.equals(id, voo.id) && Objects.equals(origem, voo.origem) && Objects.equals(destino, voo.destino) && Objects.equals(capacidadeAtual, voo.capacidadeAtual) && Objects.equals(capacidadeMax, voo.capacidadeMax);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(lockVoo, id, origem, destino, capacidadeAtual, capacidadeMax);
+	}
 }

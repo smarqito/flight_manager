@@ -1,15 +1,29 @@
 package g12.Server.FlightManager.UserManager;
 
+import sun.tools.jstat.Token;
+
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class User {
 
 	private String nome;
 	private String pass;
+	private ReentrantLock lockU;
+	private Token tokenU;
 
 	public User(String nome, String pass) {
 		this.nome = nome;
 		this.pass = pass;
+		this.lockU = new ReentrantLock();
+		this.tokenU = null;
+	}
+
+	public User(String nome, String pass, ReentrantLock lockU, Token tokenU) {
+		this.nome = nome;
+		this.pass = pass;
+		this.lockU = lockU;
+		this.tokenU = tokenU;
 	}
 
 	public User(User u){
@@ -22,6 +36,22 @@ public abstract class User {
 	
 	public void setPass(String novaPass) {
 		this.pass = novaPass;
+	}
+
+	public ReentrantLock getLockU() {
+		return lockU;
+	}
+
+	public void setLockU(ReentrantLock lockU) {
+		this.lockU = lockU;
+	}
+
+	public Token getTokenU() {
+		return tokenU;
+	}
+
+	public void setTokenU(Token tokenU) {
+		this.tokenU = tokenU;
 	}
 
 	/**
