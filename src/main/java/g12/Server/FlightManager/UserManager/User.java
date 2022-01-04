@@ -8,7 +8,7 @@ public abstract class User {
 
 	private String nome;
 	private String pass;
-	protected Lock lock;
+	public Lock lock;
 	private String token;
 
 	public User(String nome, String pass) {

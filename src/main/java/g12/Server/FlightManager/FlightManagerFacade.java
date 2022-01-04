@@ -7,7 +7,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import g12.Server.FlightManager.BookingManager.*;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
+import g12.Server.FlightManager.Exceptions.NotAllowed;
+import g12.Server.FlightManager.Exceptions.UserIsNotClient;
 import g12.Server.FlightManager.Exceptions.UserJaExisteException;
+import g12.Server.FlightManager.Exceptions.UserNaoExistente;
 import g12.Server.FlightManager.UserManager.*;
 
 public class FlightManagerFacade implements IFlightManager {
@@ -43,18 +46,21 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @param dest
 	 * @param cap
 	 */
-	public void registerFlight(String user, String origem, String dest, Integer cap) {
-		// TODO - implement FlightManagerFacade.registerFlight
-		throw new UnsupportedOperationException();
+	public void registerFlight(String origem, String dest, Integer cap) {
+		booking.addFlight(origem, dest, cap);
 	}
 
 	/**
 	 * 
 	 * @param user
+	 * @throws UserNaoExistente
+	 * @throws NotAllowed
 	 */
-	public Boolean closeDay(String user) {
-		// TODO - implement FlightManagerFacade.closeDay
-		throw new UnsupportedOperationException();
+	public Boolean closeDay(String user) throws UserNaoExistente, NotAllowed {
+		if (users.isAdmin(user)) {
+			return booking.closeDay();
+		}
+		throw new NotAllowed("O utilizador " + user + "nao tem permissoes");
 	}
 
 	/**
@@ -63,20 +69,42 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @param percurso
 	 * @param de
 	 * @param ate
+	 * @throws UserNaoExistente
+	 * @throws UserIsNotClient
 	 */
-	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) {
-		// TODO - implement FlightManagerFacade.bookFlight
-		throw new UnsupportedOperationException();
+	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
+			throws UserIsNotClient, UserNaoExistente {
+		if (users.hasUser(user)) {
+			String bookId = booking.bookFlight(user, percurso, de, ate);
+			users.addReserva(user, bookId);
+			return bookId;
+		}
+		throw new UserNaoExistente(user);
 	}
 
 	/**
 	 * 
 	 * @param user
 	 * @param id
+	 * @throws UserIsNotClient
+	 * @throws UserNaoExistente
 	 */
-	public Boolean cancelBook(String user, Integer id) {
-		// TODO - implement FlightManagerFacade.cancelBook
-		throw new UnsupportedOperationException();
+	public Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient {
+		if (this.users.isClient(user)) {
+			User u = users.getUser(user);
+			try {
+				u.lock.lock();
+				Client c = (Client) u;
+				if (c.hasReserva(id)) {
+					this.booking.removeBooking(id);
+					c.removeReserva(id);
+					return true;
+				}
+			} finally {
+				u.lock.unlock();
+			}
+		}
+		return false;
 	}
 
 	public List<InfoVoo> availableFlights() {

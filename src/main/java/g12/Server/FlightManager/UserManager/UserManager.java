@@ -68,15 +68,15 @@ public class UserManager implements IUserManager {
 
 	@Override
 	public void addUser(String user, String pass) throws UserJaExisteException {
-		if (this.hasUser(user)) {
-			throw new UserJaExisteException("O nome " + user + " ja existe!");
-		}
-		User u = new Client(user, pass);
 		this.lock.lock();
 		try {
+			if (this.hasUser(user)) {
+				throw new UserJaExisteException("O nome " + user + " ja existe!");
+			}
+			User u = new Client(user, pass);
 			this.users.put(user, u);
 		} finally {
-			lock.unlock();
+			this.lock.unlock();
 		}
 	}
 
