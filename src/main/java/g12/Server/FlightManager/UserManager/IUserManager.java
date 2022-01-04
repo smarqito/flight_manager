@@ -18,6 +18,12 @@ public interface IUserManager {
 	String checkLogin(String user, String pass) throws LoginInvalido;
 
 	/**
+	 * Devolve o utilizador
+	 * 
+	 * @param user Identificador do utilizador
+	 */
+	User getUser(String user) throws UserNaoExistente;
+	/**
 	 * Verifica se o utilizador existe
 	 * 
 	 * @param user Identificador do utilizador
@@ -55,8 +61,9 @@ public interface IUserManager {
 	 * @param id
 	 * @return
 	 * @throws UserNaoExistente
+	 * @throws UserIsNotClient
 	 */
-	Boolean hasReserva(String user, String id) throws UserNaoExistente;
+	Boolean hasReserva(String user, String id) throws UserNaoExistente, UserIsNotClient;
 
 	/**
 	 * 

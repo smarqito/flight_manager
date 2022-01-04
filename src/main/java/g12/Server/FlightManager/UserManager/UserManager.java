@@ -154,12 +154,8 @@ public class UserManager implements IUserManager {
 		}
 	}
 
-	/**
-	 * Devolve o utilizador
-	 * 
-	 * @param user Identificador do utilizador
-	 */
-	private User getUser(String user) throws UserNaoExistente {
+	@Override
+	public User getUser(String user) throws UserNaoExistente {
 		this.lock.lock();
 		try {
 			if (this.users.containsKey(user)) {
