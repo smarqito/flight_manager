@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 public class Reserva {
 
-	private Collection<InfoVoo> infoVoos;
+	private Voos infoVoos;
 	private String id;
 	private String user;
 

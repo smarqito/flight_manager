@@ -1,77 +1,173 @@
 package g12.Server.FlightManager.UserManager;
 
+import g12.Middleware.TokenInvalido;
+import g12.Server.FlightManager.Exceptions.LoginInvalido;
 import g12.Server.FlightManager.Exceptions.UserIsNotClient;
+import g12.Server.FlightManager.Exceptions.UserJaExisteException;
 import g12.Server.FlightManager.Exceptions.UserNaoExistente;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+import com.auth0.jwt.exceptions.InvalidClaimException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
+
 public class UserManager implements IUserManager {
 
 	private Map<String, User> users;
-	private Lock lockUM = new ReentrantLock();
+	private Lock lock = new ReentrantLock(); // para proteger o map users
+	private Algorithm alg = Algorithm.HMAC256("g12sd");
+	private JWTVerifier verifier = JWT.require(alg).build();
 
-	public Boolean checkLogin(String user, String pass) throws UserNaoExistente {
-		lockUM.lock();
+	public UserManager() {
+		users = new HashMap<>();
+	}
+
+	@Override
+	public String checkLogin(String user, String pass) throws LoginInvalido {
+		lock.lock();
+		User u;
 		try {
-			return getUser(user).isPassValid(pass);
+			u = getUser(user);
+			u.lock.lock();
+		} catch (UserNaoExistente une) {
+			throw new LoginInvalido("Os dados de autenticacao nao correspondem!");
+		} finally {
+			lock.unlock();
 		}
-		finally {
-			lockUM.unlock();
+		try {
+			if (u.isPassValid(pass)) {
+				String token = this.generateToken(user);
+				u.setToken(token);
+				return token;
+			} else {
+				throw new LoginInvalido("Os dados de autenticacao nao correspondem!");
+			}
+		} finally {
+			u.lock.unlock();
 		}
 	}
 
+	@Override
 	public Boolean hasUser(String user) {
-		return this.users.containsKey(user);
-	}
-
-	public void addUser(String user, String pass) throws UserNaoExistente {
-		lockUM.lock();
+		this.lock.lock();
 		try {
-			this.users.put(user, getUser(user));
-			getUser(user).setPass(pass);
-		}
-		finally {
-			lockUM.unlock();
+			return this.users.containsKey(user);
+		} finally {
+			this.lock.unlock();
 		}
 	}
 
+	@Override
+	public void addUser(String user, String pass) throws UserJaExisteException {
+		if (this.hasUser(user)) {
+			throw new UserJaExisteException("O nome " + user + " ja existe!");
+		}
+		User u = new Client(user, pass);
+		this.lock.lock();
+		try {
+			this.users.put(user, u);
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	@Override
 	public void addReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente {
-		lockUM.lock();
+		this.lock.lock();
+		User u;
 		try {
-			if (!(getUser(user) instanceof Client)) throw new UserIsNotClient();
-			((Client) getUser(user)).addReserva(idR);
+			u = getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
 		}
-		finally {
-			lockUM.unlock();
+		try {
+			if (!u.getClass().getSimpleName().equals(Client.class.getSimpleName())) {
+				throw new UserIsNotClient();
+			}
+			Client c = (Client) u;
+			c.addReserva(idR);
+		} finally {
+			u.lock.unlock();
 		}
 	}
 
+	@Override
 	public void removeReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente {
-		lockUM.lock();
+		this.lock.lock();
+		User u;
 		try {
-			if (!(getUser(user) instanceof Client)) throw new UserIsNotClient();
-			((Client) getUser(user)).removeReserva(idR);
+			u = getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
 		}
-		finally {
-			lockUM.unlock();
+		try {
+			if (!u.getClass().getSimpleName().equals(Client.class.getSimpleName())) {
+				throw new UserIsNotClient();
+			}
+			Client c = (Client) u;
+			c.removeReserva(idR);
+		} finally {
+			u.lock.unlock();
+		}
+	}
+
+	@Override
+	public String checkToken(String token) throws TokenInvalido {
+		try {
+			DecodedJWT dec = this.verifier.verify(token);
+			Claim c = dec.getClaim("User");
+			return c.asString();
+		} catch (AlgorithmMismatchException | SignatureVerificationException | InvalidClaimException e) {
+			throw new TokenInvalido("O token e invalido!");
 		}
 	}
 
 	/**
 	 * Devolve o utilizador
+	 * 
 	 * @param user Identificador do utilizador
 	 */
-	public User getUser(String user) throws UserNaoExistente {
-		lockUM.lock();
-		try{
-			if(!this.users.containsKey(user)) throw new UserNaoExistente("Utilizador "+user+" não existe.");
-			return this.users.get(user).clone();
+	private User getUser(String user) throws UserNaoExistente {
+		this.lock.lock();
+		try {
+			if (this.users.containsKey(user)) {
+				return this.users.get(user);
+			}
+		} finally {
+			this.lock.unlock();
 		}
-		finally {
-			lockUM.unlock();
+		throw new UserNaoExistente("Utilizador " + user + " não existe.");
+	}
+
+	public void setToken(String user, String token) throws UserNaoExistente {
+		this.lock.lock();
+		User u;
+		try {
+			u = getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
+		}
+		try {
+			u.setToken(token);
+		} finally {
+			u.lock.unlock();
 		}
 	}
 
+	public String generateToken(String user) {
+		String token = JWT.create().withClaim("User", user).sign(this.alg);
+		return token;
+	}
 }

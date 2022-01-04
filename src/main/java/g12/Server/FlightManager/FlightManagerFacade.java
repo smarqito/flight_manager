@@ -19,7 +19,7 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @param user
 	 * @param pass
 	 */
-	public Boolean login(String user, String pass) {
+	public String login(String user, String pass) {
 		// TODO - implement FlightManagerFacade.login
 		throw new UnsupportedOperationException();
 	}
@@ -80,6 +80,12 @@ public class FlightManagerFacade implements IFlightManager {
 	public List<InfoVoo> availableFlights() {
 		// TODO - implement FlightManagerFacade.availableFlights
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Boolean verifyToken(String token) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
