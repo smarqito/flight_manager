@@ -10,21 +10,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TaggedConnection implements AutoCloseable {
-	public static class Frame {
-		public final int tag;
-		public final byte[] data;
-
-		public Frame(int tag, byte[] data) {
-			this.tag = tag;
-			this.data = data;
-		}
-	}
-
 	private Socket s;
-	private DataInputStream in;
-	private DataOutputStream out;
-	private Lock sendLock = new ReentrantLock();
-	private Lock rcvLock = new ReentrantLock();
+	protected DataInputStream in;
+	protected DataOutputStream out;
+	protected Lock sendLock = new ReentrantLock();
+	protected Lock rcvLock = new ReentrantLock();
 
 	/**
 	 * 
@@ -43,21 +33,9 @@ public class TaggedConnection implements AutoCloseable {
 	 * @throws IOException
 	 */
 	public void send(Frame f) throws IOException {
-		this.send(f.tag, f.data);
-	}
-
-	/**
-	 * 
-	 * @param tag
-	 * @param data
-	 * @throws IOException
-	 */
-	public void send(int tag, byte[] data) throws IOException {
 		sendLock.lock();
 		try {
-			out.writeInt(data.length + 4);
-			out.writeInt(tag);
-			out.write(data);
+			f.serialize(out);
 			out.flush();
 		} finally {
 			sendLock.unlock();
@@ -67,11 +45,7 @@ public class TaggedConnection implements AutoCloseable {
 	public Frame receive() throws IOException {
 		rcvLock.lock();
 		try {
-			int size = in.readInt();
-			int tag = in.readInt();
-			byte[] data = new byte[size-4];
-			in.readFully(data);
-			return new Frame(tag, data);
+			return Frame.deserialize(in);
 		} finally {
 			rcvLock.unlock();
 		}

@@ -13,10 +13,16 @@ public class UserTest {
     public void testIsPassValid() {
 
         Algorithm alg = Algorithm.HMAC256("secret");
-        String token = JWT.create().withClaim("User", "marcoSousa").sign(alg);
+        String token = JWT.create().withClaim("User", "marcoSousa").withClaim("isAdmin", true).sign(alg);
         System.out.println(token.length());
         token = JWT.create().withClaim("User", "marcoSousaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").sign(alg);
         System.out.println(token.length());
+        //
+        
+
+
+
+
         JWTVerifier verifier = JWT.require(alg)
                 .build();
         DecodedJWT decoded = verifier.verify(token);

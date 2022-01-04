@@ -4,7 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class Response {
+public class Response extends Frame {
 
 	private Integer respCode;
 	private String respBody;
@@ -14,7 +14,8 @@ public class Response {
 	 * @param code
 	 * @param body
 	 */
-	public Response(Integer code, String body) {
+	public Response(Integer tag, Integer code, String body) {
+		super(tag);
 		this.respBody = body;
 		this.respCode = code;
 	}
@@ -35,14 +36,17 @@ public class Response {
 		this.respBody = respBody;
 	}
 
+	@Override
 	public void serialize(DataOutputStream out) throws IOException {
+		super.serialize(out);
 		out.writeInt(respCode);
 		out.writeUTF(respBody);
 	}
 
 	public static Response deserialize(DataInputStream in) throws IOException {
+		int tag = in.readInt();
 		int rcode = in.readInt();
 		String rBody = in.readUTF();
-		return new Response(rcode, rBody);
+		return new Response(tag, rcode, rBody);
 	}
 }
