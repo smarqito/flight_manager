@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import g12.Middleware.TaggedConnection;
+import g12.Middleware.ServerConnection;
 import g12.Server.FlightManager.FlightManagerFacade;
 import g12.Server.FlightManager.IFlightManager;
 
@@ -20,7 +20,7 @@ public class Server {
 			IFlightManager model = new FlightManagerFacade();
 			while (true) {
 				Socket s = ss.accept();
-				TaggedConnection tg = new TaggedConnection(s);
+				ServerConnection tg = new ServerConnection(s);
 				new Thread(new ServerWorker(tg, model)).start();
 			}
 		}

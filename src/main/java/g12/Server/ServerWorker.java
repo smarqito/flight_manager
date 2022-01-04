@@ -7,7 +7,7 @@ import g12.Server.FlightManager.*;
 
 public class ServerWorker implements Runnable {
 
-	private final TaggedConnection c;
+	private final ServerConnection c;
 	private final IFlightManager model;
 
 	/**
@@ -15,7 +15,7 @@ public class ServerWorker implements Runnable {
 	 * @param c
 	 * @param model
 	 */
-	public ServerWorker(TaggedConnection c, IFlightManager model) {
+	public ServerWorker(ServerConnection c, IFlightManager model) {
 		this.model = model;
 		this.c = c;
 	}
@@ -73,6 +73,8 @@ public class ServerWorker implements Runnable {
 			}
 		} catch (BadRequest br) {
 			// code 400
+		} catch (IOException io) {
+			System.out.println(io.toString());
 		}
 	}
 
@@ -81,12 +83,13 @@ public class ServerWorker implements Runnable {
 		// resp code 401 Unauthorized
 	}
 
-	public void loginHandler(Query q) throws BadRequest {
+	public void loginHandler(Query q) throws BadRequest, IOException {
 		Params p = q.getParams();
 		if (p.size() != 2) {
 			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
 		}
 		Response r = new Response(q.tag, 200, "login sucesso");
+		c.send(r);
 		// model.login(p.get(0), p.get(1)); // colocar o login a retornar uma string que
 		// sera o token
 	}
