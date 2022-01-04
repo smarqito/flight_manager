@@ -6,6 +6,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import g12.Server.FlightManager.BookingManager.*;
+import g12.Server.FlightManager.Exceptions.LoginInvalido;
+import g12.Server.FlightManager.Exceptions.UserJaExisteException;
 import g12.Server.FlightManager.UserManager.*;
 
 public class FlightManagerFacade implements IFlightManager {
@@ -18,20 +20,20 @@ public class FlightManagerFacade implements IFlightManager {
 	 * 
 	 * @param user
 	 * @param pass
+	 * @throws LoginInvalido
 	 */
-	public String login(String user, String pass) {
-		// TODO - implement FlightManagerFacade.login
-		throw new UnsupportedOperationException();
+	public String login(String user, String pass) throws LoginInvalido {
+		return users.checkLogin(user, pass);
 	}
 
 	/**
 	 * 
 	 * @param user
 	 * @param pass
+	 * @throws UserJaExisteException
 	 */
-	public Boolean registerUser(String user, String pass) {
-		// TODO - implement FlightManagerFacade.registerUser
-		throw new UnsupportedOperationException();
+	public void registerUser(String user, String pass) throws UserJaExisteException {
+		users.addUser(user, pass);
 	}
 
 	/**
