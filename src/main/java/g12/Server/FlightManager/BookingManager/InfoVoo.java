@@ -11,6 +11,10 @@ public class InfoVoo {
 	public String destino;
 	public LocalDate data;
 
+	public InfoVoo(InfoVoo voo){
+
+	}
+
 	public Integer getId() {
 		return this.id;
 	}
@@ -43,6 +47,10 @@ public class InfoVoo {
 	public void deserialize(DataInputStream dis) {
 		// TODO - implement InfoVoo.deserialize
 		throw new UnsupportedOperationException();
+	}
+
+	public InfoVoo clone(){
+		return new InfoVoo(this);
 	}
 
 }
