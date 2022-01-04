@@ -68,15 +68,15 @@ public class UserManager implements IUserManager {
 
 	@Override
 	public void addUser(String user, String pass) throws UserJaExisteException {
-		if (this.hasUser(user)) {
-			throw new UserJaExisteException("O nome " + user + " ja existe!");
-		}
-		User u = new Client(user, pass);
 		this.lock.lock();
 		try {
+			if (this.hasUser(user)) {
+				throw new UserJaExisteException("O nome " + user + " ja existe!");
+			}
+			User u = new Client(user, pass);
 			this.users.put(user, u);
 		} finally {
-			lock.unlock();
+			this.lock.unlock();
 		}
 	}
 
@@ -123,22 +123,56 @@ public class UserManager implements IUserManager {
 	}
 
 	@Override
+	public Boolean hasReserva(String user, String id) throws UserNaoExistente, UserIsNotClient {
+		this.lock.lock();
+		User u;
+		try {
+			u = getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
+		}
+		try {
+			if (isClient(u)) {
+				Client c = (Client) u;
+				return c.hasReserva(id);
+			}
+		} finally {
+			u.lock.unlock();
+		}
+		throw new UserIsNotClient();
+	}
+
+	@Override
 	public String checkToken(String token) throws TokenInvalido {
 		try {
 			DecodedJWT dec = this.verifier.verify(token);
 			Claim c = dec.getClaim("User");
-			return c.asString();
-		} catch (AlgorithmMismatchException | SignatureVerificationException | InvalidClaimException e) {
+			String user = c.asString();
+			User u;
+			this.lock.lock();
+			try {
+				u = this.getUser(user);
+				u.lock.lock();
+			} finally {
+				this.lock.unlock();
+			}
+			try {
+				if (u.checkToken(token)) {
+					return c.asString();
+				}
+			} finally {
+				u.lock.unlock();
+			}
+			throw new TokenInvalido();
+		} catch (AlgorithmMismatchException | SignatureVerificationException | InvalidClaimException
+				| UserNaoExistente e) {
 			throw new TokenInvalido("O token e invalido!");
 		}
 	}
 
-	/**
-	 * Devolve o utilizador
-	 * 
-	 * @param user Identificador do utilizador
-	 */
-	private User getUser(String user) throws UserNaoExistente {
+	@Override
+	public User getUser(String user) throws UserNaoExistente {
 		this.lock.lock();
 		try {
 			if (this.users.containsKey(user)) {
@@ -170,4 +204,48 @@ public class UserManager implements IUserManager {
 		String token = JWT.create().withClaim("User", user).sign(this.alg);
 		return token;
 	}
+
+	@Override
+	public Boolean isAdmin(String user) throws UserNaoExistente {
+		User u;
+		this.lock.lock();
+		try {
+			u = getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
+		}
+		try {
+			return isAdmin(u);
+		} finally {
+			u.lock.unlock();
+		}
+	}
+
+	private Boolean isAdmin(User u) {
+		return u.getClass().getSimpleName().equals(Admin.class.getSimpleName());
+	}
+
+	@Override
+	public Boolean isClient(String user) throws UserNaoExistente {
+		this.lock.lock();
+		User u;
+		try {
+			u = this.getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
+		}
+
+		try {
+			return this.isClient(u);
+		} finally {
+			u.lock.unlock();
+		}
+	}
+
+	private Boolean isClient(User u) {
+		return u.getClass().getSimpleName().equals(Client.class.getSimpleName());
+	}
+
 }
