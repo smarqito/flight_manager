@@ -123,6 +123,24 @@ public class UserManager implements IUserManager {
 	}
 
 	@Override
+	public Boolean hasReserva(String user, String id) throws UserNaoExistente {
+		this.lock.lock();
+		User u;
+		try {
+			u = getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
+		}
+
+		try {
+			u.
+		} finally {
+			u.lock.unlock();
+		}
+	}
+
+	@Override
 	public String checkToken(String token) throws TokenInvalido {
 		try {
 			DecodedJWT dec = this.verifier.verify(token);
@@ -170,4 +188,48 @@ public class UserManager implements IUserManager {
 		String token = JWT.create().withClaim("User", user).sign(this.alg);
 		return token;
 	}
+
+	@Override
+	public Boolean isAdmin(String user) throws UserNaoExistente {
+		User u;
+		this.lock.lock();
+		try {
+			u = getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
+		}
+		try {
+			return isAdmin(u);
+		} finally {
+			u.lock.unlock();
+		}
+	}
+
+	private Boolean isAdmin(User u) {
+		return u.getClass().getSimpleName().equals(Admin.class.getSimpleName());
+	}
+
+	@Override
+	public Boolean isClient(String user) throws UserNaoExistente {
+		this.lock.lock();
+		User u;
+		try {
+			u = this.getUser(user);
+			u.lock.lock();
+		} finally {
+			this.lock.unlock();
+		}
+
+		try {
+			return this.isClient(u);
+		} finally {
+			u.lock.unlock();
+		}
+	}
+
+	private Boolean isClient(User u) {
+		return u.getClass().getSimpleName().equals(Client.class.getSimpleName());
+	}
+
 }

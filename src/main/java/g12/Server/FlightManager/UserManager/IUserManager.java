@@ -10,6 +10,7 @@ public interface IUserManager {
 
 	/**
 	 * Verifica é possível um utilizador fazer o login
+	 * 
 	 * @param user Identificador do utilizador
 	 * @param pass Palavra-pass do utilizador
 	 * @throws LoginInvalido
@@ -18,12 +19,14 @@ public interface IUserManager {
 
 	/**
 	 * Verifica se o utilizador existe
+	 * 
 	 * @param user Identificador do utilizador
 	 */
 	Boolean hasUser(String user);
 
 	/**
 	 * Adiciona um utilizador
+	 * 
 	 * @param user Identificador do utilizador
 	 * @param pass Palavra-pass do utilizador
 	 * @throws UserJaExisteException
@@ -32,17 +35,28 @@ public interface IUserManager {
 
 	/**
 	 * Adiciona uma reserva
+	 * 
 	 * @param user Identificador do utilizador
-	 * @param idR Identificador da reserva
+	 * @param idR  Identificador da reserva
 	 */
 	void addReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente;
 
 	/**
 	 * Remove uma reserva
+	 * 
 	 * @param user Identificador do utilizador
-	 * @param idR Identificador da reserva
+	 * @param idR  Identificador da reserva
 	 */
 	void removeReserva(String user, String idR) throws UserIsNotClient, UserNaoExistente;
+
+	/**
+	 * 
+	 * @param user
+	 * @param id
+	 * @return
+	 * @throws UserNaoExistente
+	 */
+	Boolean hasReserva(String user, String id) throws UserNaoExistente;
 
 	/**
 	 * 
@@ -52,4 +66,19 @@ public interface IUserManager {
 	 */
 	String checkToken(String token) throws TokenInvalido;
 
+	/**
+	 * 
+	 * @param user
+	 * @return
+	 * @throws UserNaoExistente
+	 */
+	Boolean isAdmin(String user) throws UserNaoExistente;
+	
+	/**
+	 * 
+	 * @param user
+	 * @return
+	 * @throws UserNaoExistente
+	 */
+	Boolean isClient(String user) throws UserNaoExistente;
 }
