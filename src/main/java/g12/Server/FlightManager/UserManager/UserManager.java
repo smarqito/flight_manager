@@ -148,8 +148,25 @@ public class UserManager implements IUserManager {
 		try {
 			DecodedJWT dec = this.verifier.verify(token);
 			Claim c = dec.getClaim("User");
-			return c.asString();
-		} catch (AlgorithmMismatchException | SignatureVerificationException | InvalidClaimException e) {
+			String user = c.asString();
+			User u;
+			this.lock.lock();
+			try {
+				u = this.getUser(user);
+				u.lock.lock();
+			} finally {
+				this.lock.unlock();
+			}
+			try {
+				if (u.checkToken(token)) {
+					return c.asString();
+				}
+			} finally {
+				u.lock.unlock();
+			}
+			throw new TokenInvalido();
+		} catch (AlgorithmMismatchException | SignatureVerificationException | InvalidClaimException
+				| UserNaoExistente e) {
 			throw new TokenInvalido("O token e invalido!");
 		}
 	}
