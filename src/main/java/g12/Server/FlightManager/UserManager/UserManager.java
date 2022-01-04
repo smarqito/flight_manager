@@ -164,7 +164,7 @@ public class UserManager implements IUserManager {
 			} finally {
 				u.lock.unlock();
 			}
-			throw new TokenInvalido();
+			throw new TokenInvalido("O token e invalido!");
 		} catch (AlgorithmMismatchException | SignatureVerificationException | InvalidClaimException
 				| UserNaoExistente e) {
 			throw new TokenInvalido("O token e invalido!");
