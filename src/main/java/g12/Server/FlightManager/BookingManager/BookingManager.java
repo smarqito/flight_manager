@@ -49,7 +49,7 @@ public class BookingManager implements IBookingManager {
 		throw new UnsupportedOperationException();
 	}
 
-	public List<InfoVoo> getAvailableFlights() {
+	public Voos getAvailableFlights() {
 		// TODO - implement BookingManager.getAvailableFlights
 		throw new UnsupportedOperationException();
 	}
