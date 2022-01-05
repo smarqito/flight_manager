@@ -1,10 +1,17 @@
 package g12.Server;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import g12.Middleware.*;
 import g12.Server.FlightManager.*;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
+import g12.Server.FlightManager.Exceptions.NotAllowed;
+import g12.Server.FlightManager.Exceptions.UserIsNotClient;
+import g12.Server.FlightManager.Exceptions.UserJaExisteException;
+import g12.Server.FlightManager.Exceptions.UserNaoExistente;
 
 public class ServerWorker implements Runnable {
 
@@ -45,7 +52,7 @@ public class ServerWorker implements Runnable {
 				loginHandler(q);
 			} else {
 				try {
-					checkToken(q.getToken());
+					String user = checkToken(q.getToken());
 					switch (q.getMethod()) {
 						case "login":
 							break;
@@ -56,13 +63,13 @@ public class ServerWorker implements Runnable {
 							registerFlight(q);
 							break;
 						case "closeDay":
-							closeDay(q);
+							closeDay(user, q);
 							break;
 						case "bookFlight":
-							bookFlight(q);
+							bookFlight(user, q);
 							break;
 						case "cancelBook":
-							cancelBook(q);
+							cancelBook(user, q);
 							break;
 						case "availableFlights":
 							availableFlights(q);
@@ -103,35 +110,93 @@ public class ServerWorker implements Runnable {
 		return r;
 	}
 
-	public void registerUser(Query q) {
-
-		Response r = new Response(q.tag, 200, "login sucesso");
+	public Response registerUser(Query q) throws BadRequest {
+		Params p = q.getParams();
+		if (p.size() != 2) {
+			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
+		}
+		try {
+			this.model.registerUser(p.get(0), p.get(1));
+			return new Response(q.tag, 200, "Registo efetuado com sucesso!");
+		} catch (UserJaExisteException e) {
+			return new Response(q.tag, 400, "Ja existe um utilizador com o mesmo nome");
+		}
 	}
 
-	public void registerFlight(Query q) {
-		Response r = new Response(q.tag, 200, "login sucesso");
+	public Response registerFlight(Query q) throws BadRequest {
+		Params p = q.getParams();
+		if (p.size() != 3) {
+			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
+		}
+		try {
+			this.model.registerFlight(p.get(0), p.get(1), Integer.parseInt(p.get(2)));
+			return new Response(q.tag, 200, "Registo efetuado com sucesso!");
+		} catch (NumberFormatException e) {
+			throw new BadRequest("Verifique os parametros inseridos!");
+		}
 
 	}
 
-	public void closeDay(Query q) {
-		Response r = new Response(q.tag, 200, "login sucesso");
-
+	public Response closeDay(String user, Query q) throws BadRequest {
+		Params p = q.getParams();
+		if (p.size() != 0) {
+			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
+		}
+		try {
+			this.model.closeDay(user);
+			return new Response(q.tag, 200, "");
+		} catch (UserNaoExistente | NotAllowed e) {
+			return new Response(q.tag, 400, "Nao tem permissoes para encerrar o dia!");
+		}
 	}
 
-	public void bookFlight(Query q) {
+	public Response bookFlight(String user, Query q) throws BadRequest {
 		// pelo menos 4 parametros
 		// 1o ate n-2 -> percurso
 		// n-1 e n -> de; ate
-		Response r = new Response(q.tag, 200, "login sucesso");
+		Params p = q.getParams();
+		int size = p.size();
+		if (size < 4) {
+			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
+		}
+		List<String> perc = new ArrayList<>(size - 2);
+		for (int i = 0; i < size - 2; i++) {
+			perc.add(p.get(i));
+		}
+		try {
+			String bookId = this.model.bookFlight(user, perc, LocalDate.parse(p.get(size - 2)), LocalDate.parse(p.get(size - 1)));
+			return new Response(q.tag, 200, bookId);
+		} catch (UserIsNotClient | UserNaoExistente e) {
+			return new Response(q.tag, 404, "Utilizador nao existe ou nao é cliente!");
+		}
 	}
 
-	public void cancelBook(Query q) {
-		Response r = new Response(q.tag, 200, "login sucesso");
+	public Response cancelBook(String user, Query q) throws BadRequest {
+		Params p = q.getParams();
+		int size = p.size();
+		if (size != 1) {
+			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
+		}
+		try {
+			if (this.model.cancelBook(user, p.get(0))) {
+				return new Response(q.tag, 200, "Cancelamento com sucesso");
+			}
+			return new Response(q.tag, 300, "Cancelamento nao sucedido");
+		} catch (UserNaoExistente | UserIsNotClient e) {
+			return new Response(q.tag, 404, "Utilizador nao existe ou nao e cliente");
+		}
 
 	}
 
-	public void availableFlights(Query q) {
-		Response r = new Response(q.tag, 200, "login sucesso");
+	public Response availableFlights(Query q) throws BadRequest {
+		Params p = q.getParams();
+		int size = p.size();
+		if (size != 0) {
+			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
+		}
+		this.model.availableFlights();
+		// TODO
+		return new Response(q.tag, 200, "login sucesso");
 
 	}
 
