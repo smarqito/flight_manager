@@ -30,6 +30,6 @@ public interface IBookingManager {
 	 */
 	void removeBooking(String bookId);
 
-	List<InfoVoo> getAvailableFlights();
+	Voos getAvailableFlights();
 
 }

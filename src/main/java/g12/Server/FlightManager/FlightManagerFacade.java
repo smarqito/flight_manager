@@ -105,7 +105,7 @@ public class FlightManagerFacade implements IFlightManager {
 		return false;
 	}
 
-	public List<InfoVoo> availableFlights() {
+	public Voos availableFlights() {
 		return this.booking.getAvailableFlights();
 	}
 
