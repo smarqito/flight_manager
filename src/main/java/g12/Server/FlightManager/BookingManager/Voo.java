@@ -1,5 +1,7 @@
 package g12.Server.FlightManager.BookingManager;
 
+import g12.Server.FlightManager.Exceptions.CapacidadeMaximaAtingida;
+
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -13,7 +15,7 @@ public class Voo {
 	}
 
 	private Lock lockVoo = new ReentrantLock();
-	private Integer id;
+	private String id;
 	private String origem;
 	private String destino;
 	private Integer lugaresOcupados;
