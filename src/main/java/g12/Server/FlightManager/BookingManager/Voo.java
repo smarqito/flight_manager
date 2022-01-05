@@ -1,5 +1,7 @@
 package g12.Server.FlightManager.BookingManager;
 
+import g12.Server.FlightManager.Exceptions.CapacidadeMaximaAtingida;
+
 import java.util.Objects;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -14,7 +16,7 @@ public class Voo {
 	}
 
 	private Lock lockVoo = new ReentrantLock();
-	private Integer id;
+	private String id;
 	private String origem;
 	private String destino;
 	private Integer capacidadeAtual;
@@ -30,7 +32,7 @@ public class Voo {
 	 */
 	public Voo(String origem, String dest, Integer cap) {
 		this.lockVoo = new ReentrantLock();
-		this.id=0;
+		this.id=null;
 		this.origem=origem;
 		this.destino=dest;
 		this.capacidadeAtual=0;
@@ -43,7 +45,7 @@ public class Voo {
 	 */
 	public Voo(Voo voo) {
 		this.lockVoo=voo.getLockVoo();
-		this.id=GetID();
+		this.id=""+GetID();
 		this.origem=voo.getOrigem();
 		this.destino=voo.getDestino();
 		this.capacidadeAtual=voo.getCapacidadeAtual();
@@ -58,7 +60,7 @@ public class Voo {
 		this.lockVoo = lockVoo;
 	}
 
-	public Integer getId() {
+	public String getId() {
 		return this.id;
 	}
 
@@ -90,8 +92,9 @@ public class Voo {
 		return this.capacidadeMax;
 	}
 
-	public void addUser() {
-		if(this.capacidadeAtual<this.capacidadeMax) this.capacidadeAtual++;
+	public void addUser() throws CapacidadeMaximaAtingida {
+		if(this.capacidadeAtual>=this.capacidadeMax) throw new CapacidadeMaximaAtingida("Voo "+id+" atingiu a sua capacidade máxima.");
+		this.capacidadeAtual++;
 	}
 
 	public void removeUser() {

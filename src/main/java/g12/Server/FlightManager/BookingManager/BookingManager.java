@@ -1,26 +1,23 @@
 package g12.Server.FlightManager.BookingManager;
 
+import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
+import g12.Server.FlightManager.Exceptions.VooNaoExistente;
+
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class BookingManager implements IBookingManager {
 
-	private Reserva reservas;
+	private Map<String, Reserva> reservas;
 	private Collection<BookingDay> voos;
 	private Collection<Voo> voosDiarios;
-	private Lock lock = new ReentrantLock();
+	//private Lock lock = new ReentrantLock();
 
-	/**
-	 * 
-	 * @param orig
-	 * @param dest
-	 * @param cap
-	 */
 	public void addFlight(String orig, String dest, Integer cap) {
-		// TODO - implement BookingManager.addFlight
-		throw new UnsupportedOperationException();
+		this.voos.forEach(v -> v.addVoo(new Voo(orig, dest, cap)));
 	}
 
 	public Boolean closeDay() {
@@ -28,22 +25,11 @@ public class BookingManager implements IBookingManager {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @param user
-	 * @param percurso
-	 * @param de
-	 * @param ate
-	 */
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) {
 		// TODO - implement BookingManager.bookFlight
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @param bookId
-	 */
 	public void removeBooking(String bookId) {
 		// TODO - implement BookingManager.removeBooking
 		throw new UnsupportedOperationException();
@@ -54,10 +40,6 @@ public class BookingManager implements IBookingManager {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @param date
-	 */
 	public BookingDay getBookingDay(LocalDate date) {
 		// TODO - implement BookingManager.getBookingDay
 		throw new UnsupportedOperationException();
@@ -74,44 +56,27 @@ public class BookingManager implements IBookingManager {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @param id
-	 */
-	public Reserva getReserva(String id) {
-		// TODO - implement BookingManager.getReserva
-		throw new UnsupportedOperationException();
+	public Reserva getReserva(String id) throws ReservaNaoExiste {
+		if(!this.reservas.containsKey(id)) throw new ReservaNaoExiste("Reserva +"+id+" não existe.");
+		return this.reservas.get(id);
 	}
 
-	/**
-	 * 
-	 * @param user
-	 * @param infoVoos
-	 */
 	public String addReserva(String user, List<InfoVoo> infoVoos) {
 		// TODO - implement BookingManager.addReserva
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @param orig
-	 * @param dest
-	 */
-	public Voo getVooDiario(String orig, String dest) {
-		// TODO - implement BookingManager.getVooDiario
-		throw new UnsupportedOperationException();
+	public Boolean existeVoo(String orig, String dest) {
+		return this.voosDiarios.stream().anyMatch(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest));
 	}
 
-	/**
-	 * 
-	 * @param orig
-	 * @param dest
-	 * @param cap
-	 */
+	public Voo getVooDiario(String orig, String dest) throws VooNaoExistente {
+		if(!existeVoo(orig, dest)) throw new VooNaoExistente();
+		return this.voosDiarios.stream().filter(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest)).collect(Collectors.toList()).get(0);
+	}
+
 	public void addVooDiario(String orig, String dest, Integer cap) {
-		// TODO - implement BookingManager.addVooDiario
-		throw new UnsupportedOperationException();
+		this.voosDiarios.add(new Voo(orig, dest, cap));
 	}
 
 }

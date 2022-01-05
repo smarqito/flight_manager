@@ -38,6 +38,14 @@ public abstract class User {
 		this.pass = novaPass;
 	}
 
+	public ReentrantLock getLockU() {
+		return lockU;
+	}
+
+	public void setLockU(ReentrantLock lockU) {
+		this.lockU = lockU;
+	}
+
 	public Token getTokenU() {
 		return tokenU;
 	}
