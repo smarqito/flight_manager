@@ -14,12 +14,12 @@ public class Voo {
 		return ID++;
 	}
 
-	private Lock lockVoo = new ReentrantLock();
-	private String id;
-	private String origem;
-	private String destino;
+	private final String id;
+	private final String origem;
+	private final String destino;
 	private Integer lugaresOcupados;
-	private Integer capacidade;
+	private final Integer capacidade;
+	private Lock l = new ReentrantLock();
 
 	/**
 	 * Nao lhe associa um ID
@@ -29,8 +29,7 @@ public class Voo {
 	 * @param cap
 	 */
 	public Voo(String origem, String dest, Integer cap) {
-		this.lockVoo = new ReentrantLock();
-		this.id = 0;
+		this.id = "";
 		this.origem = origem;
 		this.destino = dest;
 		this.lugaresOcupados = 0;
@@ -43,14 +42,14 @@ public class Voo {
 	 * @param voo
 	 */
 	public Voo(Voo voo) {
-		this.id = GetID();
+		this.id = GetID()+"";
 		this.origem = voo.getOrigem();
 		this.destino = voo.getDestino();
 		this.capacidade = voo.getCapacidade();
 		this.lugaresOcupados = voo.getLugaresOcupados();
 	}
 
-	public Integer getId() {
+	public String getId() {
 		return this.id;
 	}
 
@@ -70,9 +69,17 @@ public class Voo {
 		return this.lugaresOcupados;
 	}
 
-	public void addUser() {
-		if (this.lugaresOcupados < this.capacidade)
-			this.capacidade++;
+	public Boolean temLugarLivres() {
+		return this.capacidade > this.lugaresOcupados;
+	}
+
+	public void addUser() throws CapacidadeMaximaAtingida {
+
+		if (this.lugaresOcupados < this.capacidade) {
+			this.lugaresOcupados++;
+		} else {
+			throw new CapacidadeMaximaAtingida();
+		}
 	}
 
 	public void removeUser() {
@@ -87,7 +94,6 @@ public class Voo {
 	@Override
 	public String toString() {
 		return "Voo{" +
-				"lockVoo=" + lockVoo +
 				", id=" + id +
 				", origem='" + origem + '\'' +
 				", destino='" + destino + '\'' +
@@ -108,6 +114,6 @@ public class Voo {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(lockVoo, id, origem, destino);
+		return Objects.hash(origem, destino);
 	}
 }

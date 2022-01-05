@@ -3,77 +3,113 @@ package g12.Server.FlightManager.BookingManager;
 import g12.Server.FlightManager.Exceptions.CapacidadeMaximaAtingida;
 import g12.Server.FlightManager.Exceptions.DiaFechado;
 import g12.Server.FlightManager.Exceptions.PercusoNaoDisponivel;
+import g12.Server.FlightManager.Exceptions.VooJaExiste;
 import g12.Server.FlightManager.Exceptions.VooNaoExistente;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-public class BookingDay {
+public class BookingDay implements Comparable<BookingDay> {
 
 	private Map<String, Voo> voos;
 	private LocalDate date;
 	private Boolean isOpen;
-	//private Lock lock = new ReentrantLock();
-	//private Condition cond = this.lock.newCondition();
+	public Lock l = new ReentrantLock();
+	// private Condition cond = this.lock.newCondition();
 
 	public BookingDay(LocalDate date) {
-		this.voos=new HashMap<>();
-		this.date=date;
-		this.isOpen=true;
+		this.voos = new HashMap<>();
+		this.date = date;
+		this.isOpen = true;
 	}
 
-	public BookingDay(BookingDay bd){
-		this.voos=bd.getVoos();
-		this.date=bd.getDate();
-		this.isOpen=bd.getIsOpen();
+	public BookingDay(BookingDay bd) {
+		this.voos = bd.getVoos();
+		this.date = bd.getDate();
+		this.isOpen = bd.isOpen();
 	}
 
 	public Map<String, Voo> getVoos() {
-		return this.voos.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e->e.getValue().clone()));
+		return this.voos.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().clone()));
 	}
 
 	public LocalDate getDate() {
 		return this.date;
 	}
 
-	public Boolean getIsOpen() {
+	public Boolean isOpen() {
 		return this.isOpen;
 	}
 
-	public void setIsOpen(Boolean isOpen) {
-		this.isOpen = isOpen;
-	}
-
 	public Voo getVoo(String idVoo) throws VooNaoExistente {
-		if(!this.voos.containsKey(idVoo)) throw new VooNaoExistente("Voo "+idVoo+" não existe.");
-		return this.voos.get(idVoo);
+		if (this.voos.containsKey(idVoo))
+			return this.voos.get(idVoo);
+
+		throw new VooNaoExistente("Voo " + idVoo + " não existe.");
 	}
 
 	public boolean existeVoo(String origem, String destino) {
-		return this.voos.values().stream().anyMatch(v -> v.getOrigem().equals(origem) && v.getDestino().equals(destino));
+
+		return this.voos.values().stream()
+				.anyMatch(v -> v.getOrigem().equals(origem) && v.getDestino().equals(destino));
 	}
 
+	/**
+	 * Calcula se existe algum voo entre uma origem e destino e retorna
+	 * 
+	 * @param origem
+	 * @param destino
+	 * @return
+	 * @throws VooNaoExistente
+	 */
 	public Voo getVooOD(String origem, String destino) throws VooNaoExistente {
-		if(!existeVoo(origem, destino)) throw new VooNaoExistente();
-		return this.voos.values().stream().filter(v -> v.getOrigem().equals(origem) && v.getDestino().equals(destino)).collect(Collectors.toList()).get(0);
+		try {
+			return this.voos.values().stream()
+					.filter(v -> v.getOrigem().equals(origem) && v.getDestino().equals(destino)).findFirst().get();
+		} catch (NoSuchElementException e) {
+			throw new VooNaoExistente();
+		}
 	}
 
+	/**
+	 * Coloca o dia como encerrado, nao permitindo novas alterações
+	 * 
+	 * @throws DiaFechado Caso o dia ja esteja fechado
+	 */
 	public void closeDay() throws DiaFechado {
-		if(!isOpen) throw new DiaFechado("Dia está fechado.");
+		if (!isOpen)
+			throw new DiaFechado("Dia está fechado.");
+		isOpen = false;
 	}
 
-	public List<InfoVoo> addPassager(List<String> percurso) throws PercusoNaoDisponivel, VooNaoExistente, CapacidadeMaximaAtingida {
+	/**
+	 * Necessario fazer refactor. este metodo esta mal
+	 * 
+	 * TODO
+	 * 
+	 * @param percurso
+	 * @return
+	 * @throws PercusoNaoDisponivel
+	 * @throws VooNaoExistente
+	 * @throws CapacidadeMaximaAtingida
+	 * @throws DiaFechado
+	 */
+	public List<InfoVoo> addPassager(List<String> percurso)
+			throws PercusoNaoDisponivel, VooNaoExistente, CapacidadeMaximaAtingida, DiaFechado {
+		if (!isOpen)
+			throw new DiaFechado("O dia " + this.date.toString() + " esta fechado");
+
 		List<InfoVoo> ret = new ArrayList<>();
 		ListIterator<String> it = percurso.listIterator();
 
-		while(it.hasNext()){
+		while (it.hasNext()) {
 			it.next();
-			if(it.hasPrevious()){
-				if(!existeVoo(it.previous(), it.next())) throw new PercusoNaoDisponivel("O percurso não está disponível.");
+			if (it.hasPrevious()) {
+				if (!existeVoo(it.previous(), it.next()))
+					throw new PercusoNaoDisponivel("O percurso não está disponível.");
 				Voo curr = getVooOD(it.previous(), it.next());
 				curr.addUser();
 				ret.add(new InfoVoo(curr.getId(), curr.getOrigem(), curr.getDestino(), this.date));
@@ -82,12 +118,28 @@ public class BookingDay {
 		return ret;
 	}
 
-	public void addVoo(Voo voo) {
-		this.voos.put(voo.getId(), voo);
+	/**
+	 * Adiciona um novo voo, caso este nao exista no dia
+	 * 
+	 * @param voo Voo a adicionar
+	 * @throws VooJaExiste Caso o voo ja exista
+	 * @throws DiaFechado
+	 */
+	public void addVoo(Voo voo) throws VooJaExiste, DiaFechado {
+		if (isOpen) {
+			if (this.voos.containsKey(voo.getId())) {
+				throw new VooJaExiste();
+			}
+
+			this.voos.put(voo.getId(), voo);
+		} else {
+			throw new DiaFechado();
+		}
 	}
 
-	//public int compareTo(BookingDay bookD);
-
+	/**
+	 * @return Booking day clonado
+	 */
 	public BookingDay clone() {
 		return new BookingDay(this);
 	}
@@ -97,20 +149,26 @@ public class BookingDay {
 		return "BookingDay{" +
 				"voos=" + voos +
 				", date=" + date +
-				", isOpen=" + isOpen +
 				'}';
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		BookingDay that = (BookingDay) o;
 		return this.voos.equals(that.voos) && this.date.equals(that.date) && this.isOpen.equals(that.isOpen);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(voos, date, isOpen);
+		return Objects.hash(voos, date);
+	}
+
+	@Override
+	public int compareTo(BookingDay arg0) {
+		return this.date.compareTo(arg0.date);
 	}
 }
