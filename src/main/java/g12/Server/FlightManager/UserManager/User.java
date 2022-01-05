@@ -1,61 +1,50 @@
 package g12.Server.FlightManager.UserManager;
 
-import sun.tools.jstat.Token;
-
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class User {
 
 	private String nome;
 	private String pass;
-	private ReentrantLock lockU;
-	private Token tokenU;
+	public Lock lock;
+	private String token;
 
 	public User(String nome, String pass) {
 		this.nome = nome;
 		this.pass = pass;
-		this.lockU = new ReentrantLock();
-		this.tokenU = null;
+		this.lock = new ReentrantLock();
+		this.token = "";
 	}
 
-	public User(String nome, String pass, ReentrantLock lockU, Token tokenU) {
-		this.nome = nome;
-		this.pass = pass;
-		this.lockU = lockU;
-		this.tokenU = tokenU;
-	}
-
-	public User(User u){
+	public User(User u) {
 		this(u.nome, u.pass);
 	}
 
 	public String getNome() {
 		return this.nome;
 	}
-	
+
 	public void setPass(String novaPass) {
 		this.pass = novaPass;
 	}
 
-	public ReentrantLock getLockU() {
-		return lockU;
+	public String getToken() {
+		return token;
 	}
 
-	public void setLockU(ReentrantLock lockU) {
-		this.lockU = lockU;
+	public void setToken(String newToken) {
+		this.token = newToken;
 	}
 
-	public Token getTokenU() {
-		return tokenU;
-	}
-
-	public void setTokenU(Token tokenU) {
-		this.tokenU = tokenU;
+	public boolean checkToken(String toToken) {
+		return this.token.equals(toToken);
 	}
 
 	/**
 	 * Verifica se a palavra pass corresponde à que se encontra armazenada
+	 * 
 	 * @param pass Palavra pass a verificar
 	 */
 	public Boolean isPassValid(String pass) {
@@ -68,10 +57,12 @@ public abstract class User {
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		User user = (User) o;
-		return Objects.equals(nome, user.nome) && Objects.equals(pass, user.pass);
+		return this.nome.equals(user.nome) && pass.equals(user.pass);
 	}
 
 	@Override
