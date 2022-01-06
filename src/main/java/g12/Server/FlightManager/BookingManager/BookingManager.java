@@ -67,7 +67,7 @@ public class BookingManager implements IBookingManager {
 		}
 	}
 
-	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel {
+	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente {
 		l.lock();
 		try {
 			for (int i = 0; i < percurso.size() - 1; i++) {
@@ -137,7 +137,7 @@ public class BookingManager implements IBookingManager {
 	}
 
 	@Override
-	public void removeBooking(String bookId) throws ReservaNaoExiste, VooNaoExistente {
+	public void removeBooking(String bookId) throws ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente {
 		this.l.lock();
 		Reserva r;
 		try {
@@ -151,11 +151,11 @@ public class BookingManager implements IBookingManager {
 		Set<VooIdData> voosReservados = new HashSet<>();
 		try {
 			for(InfoVoo i : r.getInfoVoos()){
-				VooIdData v = voosReservados.stream().filter(x -> x.getData().equals(i.getData())).findFirst().orElse(null);
-				if(v == null){
-					voosReservados.add(new VooIdData(i.getId(), i.getData()));
-				}else{
+				try {
+					VooIdData v = voosReservados.stream().filter(x -> x.getData().equals(i.getData())).findFirst().get();
 					v.addId(i.getId());
+				} catch (NoSuchElementException e){
+					voosReservados.add(new VooIdData(i.getId(), i.getData()));
 				}
 			}
 		} finally {
@@ -189,15 +189,16 @@ public class BookingManager implements IBookingManager {
 
 	public List<Voo> getAvailableFlights() {
 		this.l.lock();
+		List<Voo> voos;
 		try {
-			return this.voosDiarios.stream().map(Voo::clone).collect(Collectors.toList());
+			voos = this.voosDiarios;
 		} finally {
 			this.l.unlock();
 		}
+		return voos.stream().map(Voo::clone).collect(Collectors.toList());
 	}
 
 	public BookingDay getBookingDay(LocalDate date) throws BookingDayNaoExistente {
-		this.l.lock();
 		try {
 			if(this.voos.stream().noneMatch(bd -> bd.getDate().equals(date))) throw new BookingDayNaoExistente();
 			return this.voos.stream().filter(bday -> bday.getDate().equals(date)).collect(Collectors.toList()).get(0);
@@ -218,10 +219,11 @@ public class BookingManager implements IBookingManager {
 	public BookingDay addBookingDay(LocalDate date) throws DiaFechado, VooJaExiste {
 		this.l.lock();
 		BookingDay bd;
+		List<Voo> vdiarios;
 		try {
 			bd = new BookingDay(date);
 			this.voos.add(bd);
-
+			vdiarios = this.voosDiarios;
 			bd.l.lock();
 		}
 		finally {
@@ -229,7 +231,7 @@ public class BookingManager implements IBookingManager {
 		}
 
 		try{
-			for(Voo v : this.voosDiarios) bd.addVoo(v);
+			for(Voo v : vdiarios) bd.addVoo(v);
 			return bd;
 		}
 		finally {
