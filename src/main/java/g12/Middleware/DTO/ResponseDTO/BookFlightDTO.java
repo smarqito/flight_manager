@@ -16,6 +16,14 @@ public class BookFlightDTO extends ResponseDTO {
         this.bookId = bookId;
     }
 
+    public String getBookId() {
+        return bookId;
+    }
+
+    public void setBookId(String bookId) {
+        this.bookId = bookId;
+    }
+
     @Override
     public void serialize(DataOutputStream out) throws IOException {
         super.serialize(out);

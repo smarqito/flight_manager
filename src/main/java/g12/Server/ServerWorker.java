@@ -146,7 +146,7 @@ public class ServerWorker implements Runnable {
 		} catch (UserIsNotClient | UserNaoExistente e) {
 			return new UnitDTO(404);
 		} catch (TokenInvalido e) {
-			return new UnitDTO(404);
+			return new UnitDTO(401);
 		}
 	}
 

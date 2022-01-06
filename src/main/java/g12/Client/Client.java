@@ -5,9 +5,9 @@ import java.net.Socket;
 
 import g12.Client.UI.ClientUI;
 import g12.Middleware.ClientConnection;
-import g12.Middleware.Params;
-import g12.Middleware.Query;
-import g12.Middleware.Response;
+import g12.Middleware.Frame;
+import g12.Middleware.DTO.DTO;
+import g12.Middleware.DTO.ResponseDTO.LoginDTO;
 
 public class Client {
 
@@ -33,16 +33,16 @@ public class Client {
 		}
 	}
 
-	public Response queryHandler(String method, Params p) throws IOException {
-		Query q = new Query(tag++, method, p);
-		c.send(q);
-		return (Response) c.receive();
+	public DTO queryHandler(DTO dto) throws IOException {
+		Frame f = new Frame(tag++, dto);
+		c.send(f);
+		return c.receive().getDto();
 	}
 
-	public Response loginHandler(Params p) throws IOException {
-		Response r = queryHandler("login", p);
+	public LoginDTO loginHandler(DTO dto) throws IOException {
+		LoginDTO r = (LoginDTO) queryHandler(dto);
 		if (r.getRespCode().equals(200)) {
-			this.c.setToken(r.getRespBody());
+			this.c.setToken(r.getToken());
 		}
 		return r;
 	}

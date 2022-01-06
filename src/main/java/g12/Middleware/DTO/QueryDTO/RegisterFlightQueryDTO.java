@@ -9,6 +9,11 @@ public class RegisterFlightQueryDTO extends QueryDTO {
 	private String dest;
 	private Integer capacidade;
 
+	public RegisterFlightQueryDTO(String origem, String dest, Integer capacidade) {
+		this.origem = origem;
+		this.dest = dest;
+		this.capacidade = capacidade;
+	}
 
 	public RegisterFlightQueryDTO(String token, String origem, String dest, Integer capacidade) {
 		super(token);
@@ -43,7 +48,7 @@ public class RegisterFlightQueryDTO extends QueryDTO {
 
 	@Override
 	public void serialize(DataOutputStream out) throws IOException {
-        super.serialize(out);
+		super.serialize(out);
 		out.writeUTF(origem);
 		out.writeUTF(dest);
 		out.writeInt(capacidade);

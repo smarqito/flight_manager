@@ -42,14 +42,9 @@ public class Frame {
     private final String className;
     private DTO dto;
 
-    public Frame(int tag, String className) {
+    public Frame(int tag, DTO dto) {
         this.tag = tag;
-        this.className = className;
-    }
-
-    public Frame(int tag, String className, DTO dto) {
-        this.tag = tag;
-        this.className = className;
+        this.className = dto.getClass().getSimpleName();
         this.dto = dto;
     }
 
@@ -76,7 +71,7 @@ public class Frame {
         int tag = in.readInt();
         try {
             DTO dto = (DTO) getMapping(cName).getMethod("deserialize", DataInputStream.class).invoke(in);
-            return new Frame(tag, cName, dto);
+            return new Frame(tag, dto);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
                 | SecurityException e) {
             throw new IOException("Tipo nao corresponde");

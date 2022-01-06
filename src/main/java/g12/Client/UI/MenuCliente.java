@@ -1,30 +1,40 @@
 package g12.Client.UI;
 
+import java.io.IOException;
+import java.time.LocalDate;
+
 import g12.Client.Client;
+import g12.Middleware.Params;
+import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
+import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
+import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
+import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
+import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
+import g12.Middleware.DTO.ResponseDTO.UnitDTO;
 
 public class MenuCliente {
 
     private Client c;
 
     /**
-     * Construtor para o menu a apresentar ao cliente 
+     * Construtor para o menu a apresentar ao cliente
      */
     public MenuCliente(Client c) {
         this.c = c;
     }
-    
+
     /**
      * Método para apresentar o menu principal para um cliente
      */
-    public void menuCliente(){
+    public void menuCliente() {
         System.out.println("Menu do Cliente");
 
-        Menu menu = new Menu(new String[]{
-            "Reservar Voo",
-            "Cancelar Voo"
+        Menu menu = new Menu(new String[] {
+                "Reservar Voo",
+                "Cancelar Voo"
         });
 
-        // Registar handlers 
+        // Registar handlers
         menu.setHandler(1, this::menuReservarVoo);
         menu.setHandler(2, this::menuCancelarVoo);
 
@@ -32,20 +42,20 @@ public class MenuCliente {
     }
 
     /**
-     * Método para apresentar o menu que permite reservar um 
+     * Método para apresentar o menu que permite reservar um
      * voo ao cliente
      */
     public void menuReservarVoo() {
         System.out.println("Menu para Reservar Voo");
 
-        Menu menu = new Menu(new String[]{
-            "Ver voos disponíveis"
-            "Fazer reserva"
+        Menu menu = new Menu(new String[] {
+                "Ver voos disponíveis",
+                "Fazer reserva"
         });
 
-        //Registar handlers
+        // Registar handlers
         menu.setHandler(1, this::menuVerVoosDisp);
-        menu.setHandler(2, this::menuReservarVoo);
+        menu.setHandler(2, this::menuReserva);
 
         menu.run();
     }
@@ -54,12 +64,12 @@ public class MenuCliente {
      * Método que permite ao cliente ver o voos disponíveis
      */
     public void menuVerVoosDisp() {
-        
-        Params p = new Params(0);
 
         try {
-            Response r = this.c.queryHandler("availableFlights", p);
-        } catch(IOException e) {
+            AvailableFlightsQueryDTO q = new AvailableFlightsQueryDTO();
+            AvailableFlightsDTO r = (AvailableFlightsDTO) this.c.queryHandler(q);
+
+        } catch (IOException e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }
@@ -67,61 +77,64 @@ public class MenuCliente {
     /**
      * Método que permite ao cliente reservar um voo
      */
-    public void menuReservarVoo() {
-        
-        Params p = new Params(3);
+    public void menuReserva() {
 
         System.out.println("Insira o seu percurso desejado(separado com , )");
         String perc = ClientUI.scin.nextLine();
-        p.add(perc);
 
-        System.out.println("Insira a data mínima!");
-        String min = ClientUI.scin.nextLine();
-        p.add(min);
+        System.out.println("Insira a data mínima! [dd-MM-YYYY]");
+        LocalDate min = ClientUI.getDate();
 
-        System.out.println("Insira a data máxima!");
-        String max = ClientUI.scin.nextLine();
-        p.add(max);
-
+        System.out.println("Insira a data máxima! [dd-MM-YYYY]");
+        LocalDate max = ClientUI.getDate();
         try {
-            Response r = this.c.queryHandler("bookFlight", p);
-            
-            if(r.getRespCode() == 200) {
-                System.out.println("Registo efetuado com sucesso!");
-            } else if(r.getRespCode() == 400) {
-                System.out.println("Utilizador nao existe ou nao é cliente!");
-            } else
-                System.out.println("Recusado.Verifique os parametros inseridos!");
+            String[] s = perc.split(",");
+            Params params = new Params(s.length);
+            params.addAll(s);
+
+            BookFlightQueryDTO q = new BookFlightQueryDTO(params, min, max);
+            BookFlightDTO r = (BookFlightDTO) this.c.queryHandler(q);
+
+            switch (r.getRespCode()) {
+                case 200:
+                    System.out.println("Reserva efetuada com o ID: " + r.getBookId());
+                    break;
+                case 401:
+                    System.out.println("Nao tem permissoes.");
+                    break;
+                default:
+                    System.out.println("Recusado.Verifique os parametros inseridos!");
+                    break;
+            }
         } catch (IOException e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }
-
 
     /**
      * Método que permite ao cliente cancelar um voo
      */
     public void menuCancelarVoo() {
 
-        Params p = new Params(1);
-
         System.out.println("Insira o identificador do voo a cancelar:");
         String id = ClientUI.scin.nextLine();
-        p.add(id);
 
-        try{
-            Response r = this.c.queryHandler("cancelBook", p);
+        try {
+            CancelBookQueryDTO q = new CancelBookQueryDTO(id);
+            UnitDTO r = (UnitDTO) this.c.queryHandler(q);
 
-            if(r.getRespCode() == 200) {
-                System.out.println("Cancelamento com sucesso");
-            
-            } else if(r.getRespCode() == 300) {
-                System.out.println("Cancelamento nao sucedido");
-            } else if(r.getRespCode() == 404) {
-                System.out.println("Utilizador nao existe ou nao e cliente");
-            } else 
-                System.out.println("Pedido mal construído, parâmetros não válidos!");
-        } catch( IOException e) {
+            switch (r.getRespCode()) {
+                case 200:
+                    System.out.println("Cancelamento com sucesso");
+                    break;
+                case 300:
+                    System.out.println("Cancelamento nao sucedido");
+                    break;
+                default:
+                    System.out.println("Utilizador nao existe ou nao e cliente");
+                    break;
+            }
+        } catch (IOException e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }

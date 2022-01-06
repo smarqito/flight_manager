@@ -12,6 +12,11 @@ public class BookFlightQueryDTO extends QueryDTO {
 	private LocalDate de;
 	private LocalDate ate;
 
+	public BookFlightQueryDTO(Params percurso, LocalDate de, LocalDate ate) {
+		this.percurso = percurso;
+		this.de = de;
+		this.ate = ate;
+	}
 
 	public BookFlightQueryDTO(String token, Params percurso, LocalDate de, LocalDate ate) {
 		super(token);

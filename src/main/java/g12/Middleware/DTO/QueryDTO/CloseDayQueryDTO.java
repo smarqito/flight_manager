@@ -5,6 +5,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class CloseDayQueryDTO extends QueryDTO {
+    public CloseDayQueryDTO() {
+    }
+
     public CloseDayQueryDTO(String token) {
         super(token);
     }

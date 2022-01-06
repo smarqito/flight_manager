@@ -10,6 +10,11 @@ public class Params extends ArrayList<String> {
         super(initialCapacity);
     }
 
+    public void addAll(String[] lst) {
+        for(String s : lst) {
+            this.add(s);
+        }
+    }
     public void serialize(DataOutputStream out) throws IOException {
         out.writeInt(this.size());
         for (String string : this) {

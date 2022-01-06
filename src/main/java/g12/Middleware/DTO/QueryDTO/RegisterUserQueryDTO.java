@@ -8,6 +8,11 @@ public class RegisterUserQueryDTO extends QueryDTO {
 	private String user;
 	private String pass;
 
+	public RegisterUserQueryDTO(String user, String pass) {
+		this.user = user;
+		this.pass = pass;
+	}
+
 	public RegisterUserQueryDTO(String token, String user, String pass) {
 		super(token);
 		this.user = user;

@@ -7,7 +7,9 @@ import java.io.IOException;
 public class CancelBookQueryDTO extends QueryDTO {
 	private String bookId;
 
-
+	public CancelBookQueryDTO(String bookId) {
+		this.bookId = bookId;
+	}
 
 	public CancelBookQueryDTO(String token, String bookId) {
 		super(token);
@@ -24,7 +26,7 @@ public class CancelBookQueryDTO extends QueryDTO {
 
 	@Override
 	public void serialize(DataOutputStream out) throws IOException {
-        super.serialize(out);
+		super.serialize(out);
 		out.writeUTF(bookId);
 	}
 

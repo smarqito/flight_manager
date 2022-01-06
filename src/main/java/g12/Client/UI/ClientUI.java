@@ -1,6 +1,8 @@
 package g12.Client.UI;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 import com.auth0.jwt.JWT;
@@ -8,7 +10,11 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 
 import g12.Client.Client;
 import g12.Middleware.Params;
-import g12.Middleware.Response;
+import g12.Middleware.DTO.DTO;
+import g12.Middleware.DTO.QueryDTO.LoginQueryDTO;
+import g12.Middleware.DTO.QueryDTO.RegisterUserQueryDTO;
+import g12.Middleware.DTO.ResponseDTO.LoginDTO;
+import g12.Middleware.DTO.ResponseDTO.UnitDTO;
 
 public class ClientUI {
 
@@ -68,29 +74,30 @@ public class ClientUI {
      * registado no sistema
      */
     private void menuLogin() {
-
-        Params p = new Params(2);
+        LoginQueryDTO q = new LoginQueryDTO();
 
         boolean login = false;
         while (!login) {
             System.out.println("Insira o seu nome de Utilizador: ");
             String id = scin.nextLine();
-            p.add(id);
+            q.setUser(id);
             System.out.println("Insira a sua palavra-passe: ");
             String pass = scin.nextLine();
-            p.add(pass);
+            q.setPass(pass);
             try {
-                Response r = this.c.loginHandler(p);
-                if(r.getRespCode().equals(200)){
+                LoginDTO r = this.c.loginHandler(q);
+                if (r.getRespCode().equals(200)) {
                     login = true;
 
-                    DecodedJWT tok_dec = JWT.decode(r.getRespBody());
+                    DecodedJWT tok_dec = JWT.decode(r.getToken());
                     boolean isAdmin = tok_dec.getClaim("isAdmin").asBoolean();
-                    System.out.println(r.getRespBody());
-                    if(isAdmin) 
+                    System.out.println(r.getToken());
+                    if (isAdmin)
                         ma.menuAdmin();
-                    else 
+                    else
                         mc.menuCliente();
+                } else {
+                    System.out.println("O login do utilizador está inválido!");
                 }
             } catch (IOException e) {
                 System.out.println("Houve problemas de comunicação. Tente novamente.");
@@ -105,18 +112,21 @@ public class ClientUI {
      */
     private void menuRegister() {
 
-        Params p = new Params(2);
-
         System.out.println("Insira o seu nome de Utilizador: ");
         String id = scin.nextLine();
-        p.add(id);
         System.out.println("Insira a sua palavra-passe: ");
         String pass = scin.nextLine();
-        p.add(pass);
-
         try {
-            Response r = this.c.queryHandler("registerUser", p);
-            System.out.println(r.getRespBody());
+            RegisterUserQueryDTO r = new RegisterUserQueryDTO(id, pass);
+            UnitDTO resp = (UnitDTO) this.c.queryHandler(r);
+            switch (resp.getRespCode()) {
+                case 200:
+                    System.out.println("Ja existe um utilizador com o mesmo nome");
+                    break;
+                default:
+                    System.out.println("Registo efetuado com sucesso!");
+                    break;
+            }
         } catch (IOException e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
@@ -126,7 +136,7 @@ public class ClientUI {
      * Método que lê do scanner um int
      * Só termina quando um int válido é inserido
      */
-    public static int getInt(){
+    public static int getInt() {
         while (!scin.hasNextInt()) {
             scin.next();
             System.out.println("Insira uma quantidade válida");
@@ -134,4 +144,14 @@ public class ClientUI {
         return scin.nextInt();
     }
 
+    public static LocalDate getDate() {
+        while(true) {
+            try {
+                String s = scin.nextLine();
+                return LocalDate.parse(s);
+            } catch (DateTimeParseException e) {
+                System.out.println("Data no formato errado: [dd-MM-yyyy]");
+            }
+        }
+    }
 }

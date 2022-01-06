@@ -6,6 +6,9 @@ import java.io.IOException;
 
 public class AvailableFlightsQueryDTO extends QueryDTO {
 
+    public AvailableFlightsQueryDTO() {
+    }
+
     public AvailableFlightsQueryDTO(String token) {
         super(token);
     }

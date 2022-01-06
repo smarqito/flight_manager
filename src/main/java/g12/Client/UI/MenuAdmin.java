@@ -3,8 +3,9 @@ package g12.Client.UI;
 import java.io.IOException;
 
 import g12.Client.Client;
-import g12.Middleware.Params;
-import g12.Middleware.Response;
+import g12.Middleware.DTO.QueryDTO.CloseDayQueryDTO;
+import g12.Middleware.DTO.QueryDTO.RegisterFlightQueryDTO;
+import g12.Middleware.DTO.ResponseDTO.UnitDTO;
 
 public class MenuAdmin {
 
@@ -40,29 +41,22 @@ public class MenuAdmin {
      */
     public void menuRegistarVoo() {
 
-        Params p = new Params(3);
-
         System.out.println("Insira a origem do seu voo:");
         String origem = ClientUI.scin.nextLine();
-        p.add(origem);
 
         System.out.println("Insira o destino do seu voo:");
         String dest = ClientUI.scin.nextLine();
-        p.add(dest);
 
         System.out.println("Insira a capcidade:");
         Integer cap = ClientUI.getInt();
-        p.add(String.valueOf(cap));
 
         try {
-            Response r = this.c.queryHandler("registerFlight", p);
+            RegisterFlightQueryDTO q = new RegisterFlightQueryDTO(origem, dest, cap);
+            UnitDTO r = (UnitDTO) this.c.queryHandler(q);
 
             if (r.getRespCode().equals(200)) {
                 System.out.println("Registo efetuado com sucesso!");
-            } else {
-                System.out.println("Recusado.Verifique os parâmetros inseridos!");
             }
-
         } catch (IOException e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
@@ -75,19 +69,17 @@ public class MenuAdmin {
      */
     public void menuEncerrarDia() {
 
-        Params p = new Params(0);
-
         try {
-            Response r = this.c.queryHandler("closeDay", p);
-
-            if(r.getRespCode() == 200) {
-                System.out.println("Pedido efetuado com sucesso!");
-            } else if(r.getRespCode() == 400) {
-                System.out.println("Nao tem permissoes para encerrar o dia!");
-            } else {
-                System.out.println("O pedido foi mal construído!");
+            CloseDayQueryDTO q = new CloseDayQueryDTO();
+            UnitDTO r = (UnitDTO) this.c.queryHandler(q);
+            switch (r.getRespCode()) {
+                case 200:
+                    System.out.println("Pedido efetuado com sucesso!");
+                    break;
+                default:
+                    System.out.println("Nao tem permissoes para encerrar o dia!");
+                    break;
             }
-
         } catch (IOException e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
