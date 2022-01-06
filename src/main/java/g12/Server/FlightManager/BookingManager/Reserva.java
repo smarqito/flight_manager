@@ -24,7 +24,7 @@ public class Reserva {
 	private Voos infoVoos;
 	private String id;
 	private String user;
-	private Lock l = new ReentrantLock();
+	public Lock l = new ReentrantLock();
 	
 	public Reserva(String user) {
 		this.infoVoos = new Voos();

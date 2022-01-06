@@ -7,8 +7,10 @@ import java.util.List;
 
 import g12.Middleware.*;
 import g12.Server.FlightManager.*;
+import g12.Server.FlightManager.Exceptions.DiaFechado;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
 import g12.Server.FlightManager.Exceptions.NotAllowed;
+import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
 import g12.Server.FlightManager.Exceptions.UserIsNotClient;
 import g12.Server.FlightManager.Exceptions.UserJaExisteException;
 import g12.Server.FlightManager.Exceptions.UserNaoExistente;
@@ -147,6 +149,8 @@ public class ServerWorker implements Runnable {
 			return new Response(q.tag, 200, "");
 		} catch (UserNaoExistente | NotAllowed e) {
 			return new Response(q.tag, 400, "Nao tem permissoes para encerrar o dia!");
+		} catch (DiaFechado e) {
+			return new Response(q.tag, 400, "Nao tem permissoes para encerrar o dia!");
 		}
 	}
 
@@ -183,6 +187,8 @@ public class ServerWorker implements Runnable {
 			}
 			return new Response(q.tag, 300, "Cancelamento nao sucedido");
 		} catch (UserNaoExistente | UserIsNotClient e) {
+			return new Response(q.tag, 404, "Utilizador nao existe ou nao e cliente");
+		} catch (ReservaNaoExiste e) {
 			return new Response(q.tag, 404, "Utilizador nao existe ou nao e cliente");
 		}
 
