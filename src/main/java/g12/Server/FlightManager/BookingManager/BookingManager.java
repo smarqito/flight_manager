@@ -1,9 +1,6 @@
 package g12.Server.FlightManager.BookingManager;
 
-import g12.Server.FlightManager.Exceptions.DiaFechado;
-import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
-import g12.Server.FlightManager.Exceptions.VooJaExiste;
-import g12.Server.FlightManager.Exceptions.VooNaoExistente;
+import g12.Server.FlightManager.Exceptions.*;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -70,9 +67,36 @@ public class BookingManager implements IBookingManager {
 		}
 	}
 
-	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) {
-		// TODO - implement BookingManager.bookFlight
-		throw new UnsupportedOperationException();
+	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel {
+		Reserva r = new Reserva(user);
+		while (!percurso.isEmpty() && de.isBefore(ate)) {
+			l.lock();
+			BookingDay bd;
+			try {
+				bd = this.getBookingDay(de);
+				bd.l.lock();
+			} finally {
+				l.unlock();
+			}
+			try {
+				List<InfoVoo> info = bd.addPassager(percurso);
+				r.addVooInfo(info);
+				info.forEach(x -> percurso.remove(x.origem));
+			} catch (CapacidadeMaximaAtingida | DiaFechado e) {
+				de = de.plusDays(1);
+			} finally {
+				bd.l.unlock();
+			}
+		}
+		if (!percurso.isEmpty())
+			throw new ReservaIndisponivel();
+		l.lock();
+		try {
+			this.reservas.put(r.getId(), r);
+			return r.getId();
+		} finally {
+			l.unlock();
+		}
 	}
 
 	class VooIdData implements Comparable<VooIdData> {
@@ -131,7 +155,7 @@ public class BookingManager implements IBookingManager {
 			this.l.lock();
 			BookingDay bd;
 			try {
-				bd = this.voos.stream().filter(x -> x.getDate().equals(v.getData())).findFirst().get();
+				bd = this.getBookingDay(v.getData());
 				bd.l.lock();
 			} finally {
 				l.unlock();
@@ -153,27 +177,13 @@ public class BookingManager implements IBookingManager {
 		}
 	}
 
-	public Voos getAvailableFlights() {
-		Voos voos = new Voos();
+	public List<Voo> getAvailableFlights() {
 		this.l.lock();
 		try {
-			try {
-				for(BookingDay bd : this.voos){
-					bd.l.lock();
-					for(Voo v : bd.getVoos().values()){
-						if(v.temLugarLivres())
-							voos.add(new InfoVoo(v.getId(), v.getOrigem(), v.getDestino(), bd.getDate()));
-					}
-				}
-			} finally {
-				for(BookingDay bd : this.voos){
-					bd.l.unlock();
-				}
-			}
+			return this.voosDiarios.stream().map(Voo::clone).collect(Collectors.toList());
 		} finally {
 			this.l.unlock();
 		}
-		return voos;
 	}
 
 	public BookingDay getBookingDay(LocalDate date) {
