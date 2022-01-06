@@ -12,12 +12,9 @@ public class BookFlightQueryDTO extends QueryDTO {
 	private LocalDate de;
 	private LocalDate ate;
 
-	public BookFlightQueryDTO(int tag) {
-		super(tag, BookFlightQueryDTO.class.getSimpleName());
-	}
 
-	public BookFlightQueryDTO(int tag, Params percurso, LocalDate de, LocalDate ate) {
-		this(tag);
+	public BookFlightQueryDTO(String token, Params percurso, LocalDate de, LocalDate ate) {
+		super(token);
 		this.percurso = percurso;
 		this.de = de;
 		this.ate = ate;
@@ -56,10 +53,10 @@ public class BookFlightQueryDTO extends QueryDTO {
 	}
 
 	public static BookFlightQueryDTO deserialize(DataInputStream in) throws IOException {
-		int tag = in.readInt();
+		String token = in.readUTF();
 		Params p = Params.deserialize(in);
 		LocalDate de = LocalDate.ofEpochDay(in.readLong());
 		LocalDate ate = LocalDate.ofEpochDay(in.readLong());
-		return new BookFlightQueryDTO(tag, p, de, ate);
+		return new BookFlightQueryDTO(token, p, de, ate);
 	}
 }

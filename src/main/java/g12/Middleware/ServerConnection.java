@@ -9,14 +9,4 @@ public class ServerConnection extends TaggedConnection {
         super(s);
     }
 
-    @Override
-    public Frame receive() throws IOException {
-        rcvLock.lock();
-        try {
-            return Query.deserialize(in);
-        } finally {
-            rcvLock.unlock();
-        }
-    }
-
 }

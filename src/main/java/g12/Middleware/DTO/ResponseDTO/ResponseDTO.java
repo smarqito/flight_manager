@@ -9,8 +9,7 @@ public abstract class ResponseDTO extends DTO {
 
 	private Integer respCode;
 
-	public ResponseDTO(int tag, String className, Integer respCode) {
-		super(tag, className);
+	public ResponseDTO(Integer respCode) {
 		this.respCode = respCode;
 	}
 
@@ -24,7 +23,6 @@ public abstract class ResponseDTO extends DTO {
 
 	@Override
 	public void serialize(DataOutputStream out) throws IOException {
-		super.serialize(out);
 		out.writeInt(respCode);
 	}
 

@@ -8,12 +8,8 @@ public class RegisterUserQueryDTO extends QueryDTO {
 	private String user;
 	private String pass;
 
-	public RegisterUserQueryDTO(int tag) {
-		super(tag, RegisterUserQueryDTO.class.getSimpleName());
-	}
-
-	public RegisterUserQueryDTO(int tag, String user, String pass) {
-		super(tag, RegisterUserQueryDTO.class.getSimpleName());
+	public RegisterUserQueryDTO(String token, String user, String pass) {
+		super(token);
 		this.user = user;
 		this.pass = pass;
 	}
@@ -47,9 +43,9 @@ public class RegisterUserQueryDTO extends QueryDTO {
 	 * @throws IOException
 	 */
 	public static RegisterUserQueryDTO deserialize(DataInputStream in) throws IOException {
-		int tag = in.readInt();
+		String token = in.readUTF();
 		String user = in.readUTF();
 		String pass = in.readUTF();
-		return new RegisterUserQueryDTO(tag, user, pass);
+		return new RegisterUserQueryDTO(token, user, pass);
 	}
 }

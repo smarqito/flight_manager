@@ -9,12 +9,9 @@ public class RegisterFlightQueryDTO extends QueryDTO {
 	private String dest;
 	private Integer capacidade;
 
-	public RegisterFlightQueryDTO(int tag) {
-		super(tag, RegisterFlightQueryDTO.class.getSimpleName());
-	}
 
-	public RegisterFlightQueryDTO(int tag, String origem, String dest, Integer capacidade) {
-		this(tag);
+	public RegisterFlightQueryDTO(String token, String origem, String dest, Integer capacidade) {
+		super(token);
 		this.origem = origem;
 		this.dest = dest;
 		this.capacidade = capacidade;
@@ -46,18 +43,18 @@ public class RegisterFlightQueryDTO extends QueryDTO {
 
 	@Override
 	public void serialize(DataOutputStream out) throws IOException {
-		super.serialize(out);
+        super.serialize(out);
 		out.writeUTF(origem);
 		out.writeUTF(dest);
 		out.writeInt(capacidade);
 	}
 
 	public static RegisterFlightQueryDTO deserialize(DataInputStream in) throws IOException {
-		int tag = in.readInt();
+		String token = in.readUTF();
 		String org = in.readUTF();
 		String dest = in.readUTF();
 		int cap = in.readInt();
-		return new RegisterFlightQueryDTO(tag, org, dest, cap);
+		return new RegisterFlightQueryDTO(token, org, dest, cap);
 	}
 
 }

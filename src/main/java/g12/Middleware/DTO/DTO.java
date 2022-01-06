@@ -1,14 +1,9 @@
 package g12.Middleware.DTO;
 
-import g12.Middleware.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
-public abstract class DTO extends Frame {
+public abstract class DTO {
 
-    public DTO(int tag, String className) {
-        super(tag, className);
-    }
-
-    /**
-     * int tag
-     */
+    public abstract void serialize(DataOutputStream out) throws IOException;
 }

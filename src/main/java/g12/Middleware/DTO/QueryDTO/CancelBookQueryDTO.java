@@ -7,12 +7,10 @@ import java.io.IOException;
 public class CancelBookQueryDTO extends QueryDTO {
 	private String bookId;
 
-	public CancelBookQueryDTO(int tag) {
-		super(tag, CancelBookQueryDTO.class.getSimpleName());
-	}
 
-	public CancelBookQueryDTO(int tag, String bookId) {
-		this(tag);
+
+	public CancelBookQueryDTO(String token, String bookId) {
+		super(token);
 		this.bookId = bookId;
 	}
 
@@ -26,14 +24,14 @@ public class CancelBookQueryDTO extends QueryDTO {
 
 	@Override
 	public void serialize(DataOutputStream out) throws IOException {
-		super.serialize(out);
+        super.serialize(out);
 		out.writeUTF(bookId);
 	}
 
 	public static CancelBookQueryDTO deserialize(DataInputStream in) throws IOException {
-		int tag = in.readInt();
+		String token = in.readUTF();
 		String bookid = in.readUTF();
-		return new CancelBookQueryDTO(tag, bookid);
+		return new CancelBookQueryDTO(token, bookid);
 	}
 
 }

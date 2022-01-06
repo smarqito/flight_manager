@@ -8,12 +8,8 @@ public class LoginQueryDTO extends QueryDTO {
 	private String user;
 	private String pass;
 
-	public LoginQueryDTO(int tag) {
-		super(tag, LoginQueryDTO.class.getSimpleName());
-	}
-
-	public LoginQueryDTO(int tag, String user, String pass) {
-		super(tag, LoginQueryDTO.class.getSimpleName());
+	public LoginQueryDTO(String token, String user, String pass) {
+		super(token);
 		this.user = user;
 		this.pass = pass;
 	}
@@ -36,20 +32,19 @@ public class LoginQueryDTO extends QueryDTO {
 
 	@Override
 	public void serialize(DataOutputStream out) throws IOException {
-		super.serialize(out);
+        super.serialize(out);
 		out.writeUTF(user);
 		out.writeUTF(pass);
 	}
 
-	/**
-	 * int tag
-	 * 
-	 * @throws IOException
-	 */
+    /**
+     * int tag
+     * @throws IOException
+     */
 	public static LoginQueryDTO deserialize(DataInputStream in) throws IOException {
-		int tag = in.readInt();
+		String token = in.readUTF();
 		String user = in.readUTF();
 		String pass = in.readUTF();
-		return new LoginQueryDTO(tag, user, pass);
+		return new LoginQueryDTO(token, user, pass);
 	}
 }

@@ -3,10 +3,40 @@ package g12.Middleware;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import static java.util.Map.entry;
 
 import g12.Middleware.DTO.DTO;
+import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
+import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
+import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
+import g12.Middleware.DTO.QueryDTO.CloseDayQueryDTO;
+import g12.Middleware.DTO.QueryDTO.LoginQueryDTO;
+import g12.Middleware.DTO.QueryDTO.RegisterFlightQueryDTO;
+import g12.Middleware.DTO.QueryDTO.RegisterUserQueryDTO;
+import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
+import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
+import g12.Middleware.DTO.ResponseDTO.LoginDTO;
+import g12.Middleware.DTO.ResponseDTO.UnitDTO;
 
 public class Frame {
+    static Map<String, Class<? extends DTO>> mapping = Map.ofEntries(
+            entry(UnitDTO.class.getSimpleName(), UnitDTO.class),
+            entry(BookFlightDTO.class.getSimpleName(), BookFlightDTO.class),
+            entry(AvailableFlightsDTO.class.getSimpleName(), AvailableFlightsDTO.class),
+            entry(LoginDTO.class.getSimpleName(), LoginDTO.class),
+            entry(LoginQueryDTO.class.getSimpleName(), LoginQueryDTO.class),
+            entry(RegisterUserQueryDTO.class.getSimpleName(), RegisterUserQueryDTO.class),
+            entry(RegisterFlightQueryDTO.class.getSimpleName(), RegisterFlightQueryDTO.class),
+            entry(CloseDayQueryDTO.class.getSimpleName(), CloseDayQueryDTO.class),
+            entry(BookFlightQueryDTO.class.getSimpleName(), BookFlightQueryDTO.class),
+            entry(CancelBookQueryDTO.class.getSimpleName(), CancelBookQueryDTO.class),
+            entry(AvailableFlightsQueryDTO.class.getSimpleName(), AvailableFlightsQueryDTO.class));
+
+    static Class<? extends DTO> getMapping(String m) {
+        return mapping.get(m);
+    }
 
     public final int tag;
     private final String className;
@@ -15,6 +45,12 @@ public class Frame {
     public Frame(int tag, String className) {
         this.tag = tag;
         this.className = className;
+    }
+
+    public Frame(int tag, String className, DTO dto) {
+        this.tag = tag;
+        this.className = className;
+        this.dto = dto;
     }
 
     public DTO getDto() {
@@ -32,11 +68,18 @@ public class Frame {
     public void serialize(DataOutputStream out) throws IOException {
         out.writeUTF(className);
         out.writeInt(tag);
+        dto.serialize(out);
     }
 
     public static Frame deserialize(DataInputStream in) throws IOException {
         String cName = in.readUTF();
         int tag = in.readInt();
-        return new Frame(tag, cName);
+        try {
+            DTO dto = (DTO) getMapping(cName).getMethod("deserialize", DataInputStream.class).invoke(in);
+            return new Frame(tag, cName, dto);
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+                | SecurityException e) {
+            throw new IOException("Tipo nao corresponde");
+        }
     }
 }

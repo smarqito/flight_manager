@@ -3,6 +3,8 @@ package g12.Middleware;
 import java.io.IOException;
 import java.net.Socket;
 
+import g12.Middleware.DTO.QueryDTO.QueryDTO;
+
 public class ClientConnection extends TaggedConnection {
   private String token;
 
@@ -16,18 +18,8 @@ public class ClientConnection extends TaggedConnection {
   }
 
   @Override
-  public Frame receive() throws IOException {
-    rcvLock.lock();
-    try {
-      return Response.deserialize(in);
-    } finally {
-      rcvLock.unlock();
-    }
-  }
-
-  @Override
   public void send(Frame f) throws IOException {
-    Query q = (Query) f;
+    QueryDTO q = (QueryDTO) f.getDto();
     q.setToken(this.token);
     super.send(f);
   }

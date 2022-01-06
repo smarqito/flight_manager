@@ -7,7 +7,7 @@ package g12.Middleware.DTO.ResponseDTO;
  */
 public class UnitDTO extends ResponseDTO {
 
-    public UnitDTO(int tag, Integer respCode) {
-        super(tag, UnitDTO.class.getSimpleName(), respCode);
+    public UnitDTO(Integer respCode) {
+        super(respCode);
     }
 }

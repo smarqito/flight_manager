@@ -7,12 +7,12 @@ import java.io.IOException;
 public class LoginDTO extends ResponseDTO {
     private String token;
 
-    public LoginDTO(int tag, Integer respCode) {
-        super(tag, LoginDTO.class.getSimpleName(), respCode);
+    public LoginDTO(Integer respCode) {
+        super(respCode);
     }
 
-    public LoginDTO(int tag, Integer respCode, String token) {
-        super(tag, LoginDTO.class.getSimpleName(), respCode);
+    public LoginDTO(Integer respCode, String token) {
+        super(respCode);
         this.token = token;
     }
 
@@ -37,9 +37,8 @@ public class LoginDTO extends ResponseDTO {
      * @throws IOException
      */
     public static LoginDTO deserialize(DataInputStream in) throws IOException {
-        int tag = in.readInt();
         int respCode = in.readInt();
         String token = in.readUTF();
-        return new LoginDTO(tag, respCode, token);
+        return new LoginDTO(respCode, token);
     }
 }
