@@ -47,7 +47,7 @@ public interface IFlightManager {
 	 *                          admin)
 	 * @throws DiaFechado
 	 */
-	Boolean closeDay(String user) throws UserNaoExistente, NotAllowed, DiaFechado;
+	Boolean closeDay(String user) throws UserNaoExistente, NotAllowed, DiaFechado, BookingDayNaoExistente;
 
 	/**
 	 * Efetua a marcação de uma reserva que passe pelo percurso pretendido
@@ -64,7 +64,7 @@ public interface IFlightManager {
 	 * @throws UserIsNotClient  Caso o utilizador nao seja cliente (pode ser admin)
 	 */
 	String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
-			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel;
+			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente;
 
 	/**
 	 * Cancela uma reserva;
@@ -80,7 +80,7 @@ public interface IFlightManager {
 	 * @throws UserNaoExistente Caso o user nao exista
 	 * @throws ReservaNaoExiste
 	 */
-	Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente;
+	Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente;
 
 	/**
 	 * Calcula os voos disponiveis para o dia

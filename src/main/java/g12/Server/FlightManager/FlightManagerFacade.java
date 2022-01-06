@@ -51,7 +51,7 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @throws NotAllowed
 	 * @throws DiaFechado
 	 */
-	public Boolean closeDay(String user) throws UserNaoExistente, NotAllowed, DiaFechado {
+	public Boolean closeDay(String user) throws UserNaoExistente, NotAllowed, DiaFechado, BookingDayNaoExistente {
 		if (users.isAdmin(user)) {
 			return booking.closeDay();
 		}
@@ -68,7 +68,7 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @throws UserIsNotClient
 	 */
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
-			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel {
+			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente {
 		if (users.hasUser(user)) {
 			String bookId = booking.bookFlight(user, percurso, de, ate);
 			users.addReserva(user, bookId);
@@ -85,7 +85,7 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @throws UserNaoExistente
 	 * @throws ReservaNaoExiste
 	 */
-	public Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente {
+	public Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente {
 		if (this.users.isClient(user)) {
 			User u = users.getUser(user);
 			try {

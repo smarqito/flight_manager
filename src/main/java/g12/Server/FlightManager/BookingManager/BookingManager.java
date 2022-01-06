@@ -216,8 +216,10 @@ public class BookingManager implements IBookingManager {
 	 * 
 	 * @param date
 	 */
-	public BookingDay addBookingDay(LocalDate date) throws DiaFechado, VooJaExiste {
+	public BookingDay addBookingDay(LocalDate date) throws DiaFechado, VooJaExiste, BookingDayJaExiste {
 		this.l.lock();
+		if(this.voos.stream().anyMatch(bd -> bd.getDate().equals(date)))
+			throw new BookingDayJaExiste();
 		BookingDay bd;
 		List<Voo> vdiarios;
 		try {
@@ -229,7 +231,6 @@ public class BookingManager implements IBookingManager {
 		finally {
 			this.l.unlock();
 		}
-
 		try{
 			for(Voo v : vdiarios) bd.addVoo(v);
 			return bd;
@@ -251,25 +252,25 @@ public class BookingManager implements IBookingManager {
 	}
 
 	public String addReserva(String user, List<InfoVoo> infoVoos) {
+		Reserva r = new Reserva(user);
+		r.addVooInfo(infoVoos);
 		this.l.lock();
-		Reserva r;
 		try {
-			r = new Reserva(user);
 			this.reservas.put(r.getId(), r);
-
 			r.l.lock();
 		}
 		finally {
 			this.l.unlock();
 		}
-
 		try {
-			r.addVooInfo(infoVoos);
 			return r.getId();
-		}
-		finally {
+		} finally {
 			r.l.unlock();
 		}
+	}
+
+	public Boolean existeVoo(String orig, String dest) {
+		return this.voosDiarios.stream().anyMatch(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest));
 	}
 
 	public Voo getVooDiario(String orig, String dest) throws VooNaoExistente {
