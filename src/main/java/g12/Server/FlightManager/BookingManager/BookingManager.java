@@ -52,9 +52,22 @@ public class BookingManager implements IBookingManager {
 		}
 	}
 
-	public Boolean closeDay() {
-		// TODO - implement BookingManager.closeDay
-		throw new UnsupportedOperationException();
+	@Override
+	public Boolean closeDay() throws DiaFechado {
+		this.l.lock();
+		BookingDay bd;
+		try {
+			bd = this.getBookingDay(LocalDate.now());
+			bd.l.lock();
+		} finally {
+			this.l.unlock();
+		}
+		try {
+			bd.closeDay();
+			return true;
+		} finally {
+			bd.l.unlock();
+		}
 	}
 
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) {
@@ -62,9 +75,26 @@ public class BookingManager implements IBookingManager {
 		throw new UnsupportedOperationException();
 	}
 
-	public void removeBooking(String bookId) {
-		// TODO - implement BookingManager.removeBooking
-		throw new UnsupportedOperationException();
+	@Override
+	public void removeBooking(String bookId) throws ReservaNaoExiste {
+		this.l.lock();
+		Reserva r;
+		try {
+			r = this.getReserva(bookId);
+			r.l.lock();
+		} finally {
+			this.l.unlock();			
+		}
+		try {
+			// iterar o infoVoos
+			// preencher lista de datas e lista de ids
+			// ir buscar os bookingDays associados
+			// obter lock dos booking days por ordem data
+			// remover um passageiro a cada voo
+		} finally {
+
+		}
+
 	}
 
 	public Voos getAvailableFlights() {
