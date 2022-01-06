@@ -3,6 +3,9 @@ package g12.Client.UI;
 import java.io.IOException;
 import java.util.Scanner;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
+
 import g12.Client.Client;
 import g12.Middleware.Params;
 import g12.Middleware.Response;
@@ -80,7 +83,15 @@ public class ClientUI {
                 if(r.getRespCode().equals(200)){
                     login = true;
 
+                    DecodedJWT tok_dec = JWT.decode(r.getRespBody());
+                    boolean isAdmin = tok_dec.getClaim("isAdmin").asBoolean();
+
+                    if(isAdmin) 
+                        ma.menuAdmin();
+                    else 
+                        mc.menuCliente();
                 }
+
                 System.out.println(r.getRespBody());
             } catch (IOException e) {
                 System.out.println("Houve problemas de comunicação. Tente novamente.");
