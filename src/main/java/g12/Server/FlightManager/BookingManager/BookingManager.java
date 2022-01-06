@@ -67,7 +67,7 @@ public class BookingManager implements IBookingManager {
 		}
 	}
 
-	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente {
+	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayJaExiste, DiaFechado, VooJaExiste {
 		l.lock();
 		try {
 			for (int i = 0; i < percurso.size() - 1; i++) {
@@ -82,7 +82,11 @@ public class BookingManager implements IBookingManager {
 			l.lock();
 			BookingDay bd;
 			try {
-				bd = this.getBookingDay(de);
+				try {
+					bd = this.getBookingDay(de);
+				} catch (BookingDayNaoExistente e) {
+					bd = this.addBookingDay(de);
+				}
 				bd.l.lock();
 			} finally {
 				l.unlock();
