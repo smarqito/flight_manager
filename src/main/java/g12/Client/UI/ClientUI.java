@@ -47,7 +47,7 @@ public class ClientUI {
      * no sistema
      */
     private void menuInicial() {
-        System.out.println("Menu Inicial");
+        System.out.println("Menu Inicial!");
         Menu menu = new Menu(new String[] {
                 "Entrar",
                 "Registar-se"

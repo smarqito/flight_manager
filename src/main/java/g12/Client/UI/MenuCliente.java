@@ -32,16 +32,9 @@ public class MenuCliente {
     }
 
     /**
-    1.1. : Reservar Voo
-    1.1.1 Ver voos disponiveis
-    1.1.2 Fazer reserva
-
-    1.1.2 : Fazer reserva
-    1.1.2.1 Pedir percurso, separados por virgula
-    1.1.2.2 Pedir data minima
-    1.1.2.3 Pedir data maxima
+     * Método para apresentar o menu que permite reservar um 
+     * voo ao cliente
      */
-
     public void menuReservarVoo() {
         System.out.println("Menu para Reservar Voo");
 
@@ -50,15 +43,86 @@ public class MenuCliente {
             "Fazer reserva"
         });
 
+        //Registar handlers
+        menu.setHandler(1, this::menuVerVoosDisp);
+        menu.setHandler(2, this::menuReservarVoo);
+
         menu.run();
     }
 
-    public void menuCancelarVoo() {
+    /**
+     * Método que permite ao cliente ver o voos disponíveis
+     */
+    public void menuVerVoosDisp() {
         
-        Param p = new Params(3);
+        Params p = new Params(0);
+
+        try {
+            Response r = this.c.queryHandler("availableFlights", p);
+        } catch(IOException e) {
+            System.out.println("Houve problemas de comunicação. Tente novamente.");
+        }
+    }
+
+    /**
+     * Método que permite ao cliente reservar um voo
+     */
+    public void menuReservarVoo() {
+        
+        Params p = new Params(3);
 
         System.out.println("Insira o seu percurso desejado(separado com , )");
-        String params = ClientUI.scin.nextLine();
+        String perc = ClientUI.scin.nextLine();
+        p.add(perc);
 
+        System.out.println("Insira a data mínima!");
+        String min = ClientUI.scin.nextLine();
+        p.add(min);
+
+        System.out.println("Insira a data máxima!");
+        String max = ClientUI.scin.nextLine();
+        p.add(max);
+
+        try {
+            Response r = this.c.queryHandler("bookFlight", p);
+            
+            if(r.getRespCode() == 200) {
+                System.out.println("Registo efetuado com sucesso!");
+            } else if(r.getRespCode() == 400) {
+                System.out.println("Utilizador nao existe ou nao é cliente!");
+            } else
+                System.out.println("Recusado.Verifique os parametros inseridos!");
+        } catch (IOException e) {
+            System.out.println("Houve problemas de comunicação. Tente novamente.");
+        }
+    }
+
+
+    /**
+     * Método que permite ao cliente cancelar um voo
+     */
+    public void menuCancelarVoo() {
+
+        Params p = new Params(1);
+
+        System.out.println("Insira o identificador do voo a cancelar:");
+        String id = ClientUI.scin.nextLine();
+        p.add(id);
+
+        try{
+            Response r = this.c.queryHandler("cancelBook", p);
+
+            if(r.getRespCode() == 200) {
+                System.out.println("Cancelamento com sucesso");
+            
+            } else if(r.getRespCode() == 300) {
+                System.out.println("Cancelamento nao sucedido");
+            } else if(r.getRespCode() == 404) {
+                System.out.println("Utilizador nao existe ou nao e cliente");
+            } else 
+                System.out.println("Pedido mal construído, parâmetros não válidos!");
+        } catch( IOException e) {
+            System.out.println("Houve problemas de comunicação. Tente novamente.");
+        }
     }
 }
