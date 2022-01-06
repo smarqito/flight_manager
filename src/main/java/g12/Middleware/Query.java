@@ -8,7 +8,7 @@ import java.util.Collection;
 
 public class Query extends Frame {
 
-	private final String token;
+	private String token;
 	private final String method;
 	private final Params params;
 
@@ -17,22 +17,31 @@ public class Query extends Frame {
 	 * @param method
 	 * @param numParams
 	 */
-	public Query(int tag, String token, String method, Integer numParams) {
+	public Query(int tag, String method, Integer numParams) {
 		super(tag);
-		this.token = token;
 		this.method = method;
 		this.params = new Params(numParams);
 	}
 
-	public Query(int tag, String token, String method, Params params) {
+	public Query(int tag, String method, Params params) {
 		super(tag);
-		this.token = token;
 		this.method = method;
 		this.params = params;
 	}
 
+	public Query(int tag, String token, String method, Params params) {
+		super(tag);
+		this.method = method;
+		this.params = params;
+		this.token = token;
+	}
+
 	public String getToken() {
 		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
 	}
 
 	public String getMethod() {
