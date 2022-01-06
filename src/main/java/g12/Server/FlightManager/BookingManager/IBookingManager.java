@@ -3,6 +3,7 @@ package g12.Server.FlightManager.BookingManager;
 import java.time.LocalDate;
 import java.util.List;
 
+import g12.Server.FlightManager.Exceptions.BookingDayNaoExistente;
 import g12.Server.FlightManager.Exceptions.DiaFechado;
 import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
 
@@ -16,7 +17,7 @@ public interface IBookingManager {
 	 */
 	void addFlight(String orig, String dest, Integer cap);
 
-	Boolean closeDay() throws DiaFechado;
+	Boolean closeDay() throws DiaFechado, BookingDayNaoExistente;
 
 	/**
 	 * 
