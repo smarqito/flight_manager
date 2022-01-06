@@ -64,7 +64,7 @@ public interface IFlightManager {
 	 * @throws UserIsNotClient  Caso o utilizador nao seja cliente (pode ser admin)
 	 */
 	String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
-			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente;
+			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente, BookingDayJaExiste, DiaFechado, VooJaExiste;
 
 	/**
 	 * Cancela uma reserva;

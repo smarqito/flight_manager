@@ -68,7 +68,7 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @throws UserIsNotClient
 	 */
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
-			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente {
+			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente, BookingDayJaExiste, DiaFechado, VooJaExiste {
 		if (users.hasUser(user)) {
 			String bookId = booking.bookFlight(user, percurso, de, ate);
 			users.addReserva(user, bookId);
