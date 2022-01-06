@@ -5,13 +5,7 @@ import java.util.List;
 
 import g12.Middleware.TokenInvalido;
 import g12.Server.FlightManager.BookingManager.*;
-import g12.Server.FlightManager.Exceptions.DiaFechado;
-import g12.Server.FlightManager.Exceptions.LoginInvalido;
-import g12.Server.FlightManager.Exceptions.NotAllowed;
-import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
-import g12.Server.FlightManager.Exceptions.UserIsNotClient;
-import g12.Server.FlightManager.Exceptions.UserJaExisteException;
-import g12.Server.FlightManager.Exceptions.UserNaoExistente;
+import g12.Server.FlightManager.Exceptions.*;
 import g12.Server.FlightManager.UserManager.*;
 
 public class FlightManagerFacade implements IFlightManager {
@@ -74,7 +68,7 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @throws UserIsNotClient
 	 */
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
-			throws UserIsNotClient, UserNaoExistente {
+			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel {
 		if (users.hasUser(user)) {
 			String bookId = booking.bookFlight(user, percurso, de, ate);
 			users.addReserva(user, bookId);
@@ -91,7 +85,7 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @throws UserNaoExistente
 	 * @throws ReservaNaoExiste
 	 */
-	public Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste {
+	public Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente {
 		if (this.users.isClient(user)) {
 			User u = users.getUser(user);
 			try {
@@ -109,7 +103,7 @@ public class FlightManagerFacade implements IFlightManager {
 		return false;
 	}
 
-	public Voos availableFlights() {
+	public List<Voo> availableFlights() {
 		return this.booking.getAvailableFlights();
 	}
 

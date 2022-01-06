@@ -5,13 +5,7 @@ import java.util.List;
 
 import g12.Middleware.TokenInvalido;
 import g12.Server.FlightManager.BookingManager.*;
-import g12.Server.FlightManager.Exceptions.DiaFechado;
-import g12.Server.FlightManager.Exceptions.LoginInvalido;
-import g12.Server.FlightManager.Exceptions.NotAllowed;
-import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
-import g12.Server.FlightManager.Exceptions.UserIsNotClient;
-import g12.Server.FlightManager.Exceptions.UserJaExisteException;
-import g12.Server.FlightManager.Exceptions.UserNaoExistente;
+import g12.Server.FlightManager.Exceptions.*;
 
 public interface IFlightManager {
 
@@ -70,7 +64,7 @@ public interface IFlightManager {
 	 * @throws UserIsNotClient  Caso o utilizador nao seja cliente (pode ser admin)
 	 */
 	String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
-			throws UserIsNotClient, UserNaoExistente;
+			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel;
 
 	/**
 	 * Cancela uma reserva;
@@ -86,14 +80,14 @@ public interface IFlightManager {
 	 * @throws UserNaoExistente Caso o user nao exista
 	 * @throws ReservaNaoExiste
 	 */
-	Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste;
+	Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente;
 
 	/**
 	 * Calcula os voos disponiveis para o dia
 	 * 
 	 * @return Lista de Voos diponiveis
 	 */
-	Voos availableFlights();
+	List<Voo> availableFlights();
 
 	/**
 	 * Verifica se um token é válido (algoritmo + claim)

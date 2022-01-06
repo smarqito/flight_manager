@@ -19,7 +19,7 @@ public class Voo {
 	private final String destino;
 	private Integer lugaresOcupados;
 	private final Integer capacidade;
-	private Lock l = new ReentrantLock();
+	public Lock l = new ReentrantLock();
 
 	/**
 	 * Nao lhe associa um ID

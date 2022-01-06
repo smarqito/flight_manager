@@ -67,36 +67,133 @@ public class BookingManager implements IBookingManager {
 		}
 	}
 
-	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) {
-		// TODO - implement BookingManager.bookFlight
-		throw new UnsupportedOperationException();
+	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel {
+		l.lock();
+		try {
+			for (int i = 0; i < percurso.size() - 1; i++) {
+				if (!existeVoo(percurso.get(i), percurso.get(i + 1)))
+					throw new PercusoNaoDisponivel("O percurso não está disponível.");
+			}
+		} finally {
+			l.unlock();
+		}
+		Reserva r = new Reserva(user);
+		while (!percurso.isEmpty() && de.isBefore(ate)) {
+			l.lock();
+			BookingDay bd;
+			try {
+				bd = this.getBookingDay(de);
+				bd.l.lock();
+			} finally {
+				l.unlock();
+			}
+			try {
+				List<InfoVoo> info = bd.addPassager(percurso);
+				r.addVooInfo(info);
+				info.forEach(x -> percurso.remove(x.origem));
+				de = de.plusDays(1);
+			} catch (DiaFechado e) {
+				de = de.plusDays(1);
+			} finally {
+				bd.l.unlock();
+			}
+		}
+		if (!percurso.isEmpty())
+			throw new ReservaIndisponivel();
+		l.lock();
+		try {
+			this.reservas.put(r.getId(), r);
+			return r.getId();
+		} finally {
+			l.unlock();
+		}
+	}
+
+	class VooIdData implements Comparable<VooIdData> {
+		private List<String> idList = new ArrayList<>();
+		private LocalDate data;
+
+		public VooIdData(String id, LocalDate data){
+			this.idList.add(id);
+			this.data = data;
+		}
+
+		public List<String> getIdList() {
+			return new ArrayList<>(idList);
+		}
+
+		public LocalDate getData() {
+			return data;
+		}
+
+		public void addId(String id){
+			this.idList.add(id);
+		}
+
+		@Override
+		public int compareTo(VooIdData o) {
+			return this.data.compareTo(o.getData());
+		}
 	}
 
 	@Override
-	public void removeBooking(String bookId) throws ReservaNaoExiste {
+	public void removeBooking(String bookId) throws ReservaNaoExiste, VooNaoExistente {
 		this.l.lock();
 		Reserva r;
 		try {
 			r = this.getReserva(bookId);
+			//falta verificar se existe algum lock à espera
+			this.reservas.remove(bookId);
 			r.l.lock();
 		} finally {
 			this.l.unlock();			
 		}
+		Set<VooIdData> voosReservados = new HashSet<>();
 		try {
-			// iterar o infoVoos
-			// preencher lista de datas e lista de ids
-			// ir buscar os bookingDays associados
-			// obter lock dos booking days por ordem data
-			// remover um passageiro a cada voo
+			for(InfoVoo i : r.getInfoVoos()){
+				VooIdData v = voosReservados.stream().filter(x -> x.getData().equals(i.getData())).findFirst().orElse(null);
+				if(v == null){
+					voosReservados.add(new VooIdData(i.getId(), i.getData()));
+				}else{
+					v.addId(i.getId());
+				}
+			}
 		} finally {
-
+			r.l.unlock();
 		}
-
+		for(VooIdData v : voosReservados) {
+			this.l.lock();
+			BookingDay bd;
+			try {
+				bd = this.getBookingDay(v.getData());
+				bd.l.lock();
+			} finally {
+				l.unlock();
+			}
+			Voo voo;
+			for(String id : v.getIdList()) {
+				try {
+					voo = bd.getVoo(id);
+					voo.l.lock();
+					try {
+						voo.removeUser();
+					} finally {
+						voo.l.unlock();
+					}
+				} finally {
+					bd.l.unlock();
+				}
+			}
+		}
 	}
 
-	public Voos getAvailableFlights() {
-		// TODO - implement BookingManager.getAvailableFlights
-		throw new UnsupportedOperationException();
+	public List<Voo> getAvailableFlights() {
+		this.l.lock();
+		try {
+			return this.voosDiarios.stream().map(Voo::clone).collect(Collectors.toList());
+		} finally {
+			this.l.unlock();
+		}
 	}
 
 	public BookingDay getBookingDay(LocalDate date) throws BookingDayNaoExistente {

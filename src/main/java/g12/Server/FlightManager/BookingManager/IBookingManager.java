@@ -3,9 +3,8 @@ package g12.Server.FlightManager.BookingManager;
 import java.time.LocalDate;
 import java.util.List;
 
-import g12.Server.FlightManager.Exceptions.BookingDayNaoExistente;
-import g12.Server.FlightManager.Exceptions.DiaFechado;
-import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
+import g12.Server.FlightManager.Exceptions.*;
+
 
 public interface IBookingManager {
 
@@ -26,15 +25,15 @@ public interface IBookingManager {
 	 * @param de
 	 * @param ate
 	 */
-	String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate);
+	String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel;
 
 	/**
 	 * 
 	 * @param bookId
 	 * @throws ReservaNaoExiste
 	 */
-	void removeBooking(String bookId) throws ReservaNaoExiste;
+	void removeBooking(String bookId) throws ReservaNaoExiste, VooNaoExistente;
 
-	Voos getAvailableFlights();
+	List<Voo> getAvailableFlights();
 
 }
