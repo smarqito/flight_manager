@@ -5,6 +5,7 @@ import java.util.List;
 
 import g12.Server.FlightManager.Exceptions.DiaFechado;
 import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
+import g12.Server.FlightManager.Exceptions.VooNaoExistente;
 
 public interface IBookingManager {
 
@@ -32,7 +33,7 @@ public interface IBookingManager {
 	 * @param bookId
 	 * @throws ReservaNaoExiste
 	 */
-	void removeBooking(String bookId) throws ReservaNaoExiste;
+	void removeBooking(String bookId) throws ReservaNaoExiste, VooNaoExistente;
 
 	Voos getAvailableFlights();
 
