@@ -37,6 +37,7 @@ public class ServerWorker implements Runnable {
 				try {
 					for (;;) {
 						Query frame = (Query) this.c.receive();
+						System.out.println(frame.toString());
 						this.requestHandler(frame);
 					}
 				} catch (IOException ignored) {

@@ -1,22 +1,29 @@
 package g12.Client.UI;
 
+import java.io.IOException;
 import java.util.Scanner;
 
-import g12.Server.FlightManager.IFlightManager;
-import g12.Server.FlightManager.Exceptions.LoginInvalido;
+import g12.Client.Client;
+import g12.Middleware.Params;
+import g12.Middleware.Response;
 
 public class ClientUI {
-    
+
+    public Client c;
     public static Scanner scin;
+    private MenuAdmin ma;
+    private MenuCliente mc;
 
     /**
      * Construtor para o UI da parte cliente do sistema
      * 
-     * @param model Camada de negócio 
+     * @param model Camada de negócio
      */
-    public ClientUI() {
+    public ClientUI(Client c) {
         scin = new Scanner(System.in);
-
+        this.c = c;
+        this.ma = new MenuAdmin();
+        this.mc = new MenuCliente();
     }
 
     /**
@@ -33,13 +40,13 @@ public class ClientUI {
     /**
      * Método para apresentar o menu inicial do sistema -> Flight Manager
      * 
-     * A este ponto só é permitido ao user entrar ou registar-se 
+     * A este ponto só é permitido ao user entrar ou registar-se
      * no sistema
      */
     private void menuInicial() {
-        Menu menu = new Menu(new String[]{
-            "Entrar",
-            "Registar-se"
+        Menu menu = new Menu(new String[] {
+                "Entrar",
+                "Registar-se"
         });
 
         // Registar os handlers das transições
@@ -58,21 +65,51 @@ public class ClientUI {
      */
     private void menuLogin() {
 
-        System.out.println("Insira o seu nome de Utilizador: ");
-        String id = scin.nextLine();
+        Params p = new Params(2);
 
-        System.out.println("Insira a sua palavra-passe: ");
-        String pass = scin.nextLine();
+        boolean login = false;
+        while (!login) {
+            System.out.println("Insira o seu nome de Utilizador: ");
+            String id = scin.nextLine();
+            p.add(id);
+            System.out.println("Insira a sua palavra-passe: ");
+            String pass = scin.nextLine();
+            p.add(pass);
+            try {
+                Response r = this.c.loginHandler(p);
+                if(r.getRespCode().equals(200)){
+                    login = true;
 
+                }
+                System.out.println(r.getRespBody());
+            } catch (IOException e) {
+                System.out.println("Houve problemas de comunicação. Tente novamente.");
+            }
+        }
     }
 
     /**
      * Método para apresentar o menu Registar-se ao user
      * 
-     * 
+     * Se registar-se no sistema com sucesso, volta ao menu inicial.
      */
     private void menuRegister() {
 
+        Params p = new Params(2);
+
+        System.out.println("Insira o seu nome de Utilizador: ");
+        String id = scin.nextLine();
+        p.add(id);
+        System.out.println("Insira a sua palavra-passe: ");
+        String pass = scin.nextLine();
+        p.add(pass);
+
+        try {
+            Response r = this.c.queryHandler("registerUser", p);
+            System.out.println(r.getRespBody());
+        } catch (IOException e) {
+            System.out.println("Houve problemas de comunicação. Tente novamente.");
+        }
     }
 
 }

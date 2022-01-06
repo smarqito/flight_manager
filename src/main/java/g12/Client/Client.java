@@ -3,6 +3,7 @@ package g12.Client;
 import java.io.IOException;
 import java.net.Socket;
 
+import g12.Client.UI.ClientUI;
 import g12.Middleware.ClientConnection;
 import g12.Middleware.Params;
 import g12.Middleware.Query;
@@ -12,10 +13,11 @@ public class Client {
 
 	private int tag;
 	private ClientConnection c;
-	
+
 	public Client(ClientConnection c) {
 		this.c = c;
 	}
+
 	/**
 	 * 
 	 * @param args
@@ -30,15 +32,24 @@ public class Client {
 			e.printStackTrace();
 		}
 	}
+
 	public Response queryHandler(String method, Params p) throws IOException {
 		Query q = new Query(tag++, method, p);
 		c.send(q);
 		return (Response) c.receive();
 	}
 
+	public Response loginHandler(Params p) throws IOException {
+		Response r = queryHandler("login", p);
+		if (r.getRespCode().equals(200)) {
+			this.c.setToken(r.getRespBody());
+		}
+		return r;
+	}
+
 	public void clientRunnable() {
-		
-		// chamar menu inicial [sem login]
+		ClientUI cUi = new ClientUI(this);
+		cUi.run();
 	}
 
 	/**
