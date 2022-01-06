@@ -45,7 +45,8 @@ public class UserManager implements IUserManager {
 		}
 		try {
 			if (u.isPassValid(pass)) {
-				String token = u.getToken();
+				String token = generateToken(user);
+				u.setToken(token);
 				return token;
 			} else {
 				throw new LoginInvalido("Os dados de autenticacao nao correspondem!");

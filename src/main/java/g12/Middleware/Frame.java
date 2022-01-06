@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import static java.util.Map.entry;
 
@@ -70,7 +71,9 @@ public class Frame {
         String cName = in.readUTF();
         int tag = in.readInt();
         try {
-            DTO dto = (DTO) getMapping(cName).getMethod("deserialize", DataInputStream.class).invoke(in);
+            Class<? extends DTO> p = getMapping(cName);
+            Method m = p.getMethod("deserialize", DataInputStream.class);
+            DTO dto = (DTO) m.invoke(null, in);
             return new Frame(tag, dto);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
                 | SecurityException e) {

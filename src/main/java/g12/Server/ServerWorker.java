@@ -74,17 +74,12 @@ public class ServerWorker implements Runnable {
 		}
 	}
 
-	public void requestHandler(Frame f) {
+	public void requestHandler(Frame f) throws IOException {
 		QueryDTO dto = (QueryDTO) f.getDto();
 		String method = dto.getClass().getSimpleName();
-		DTO r;
-		if (method.equals(LoginQueryDTO.class.getSimpleName())) {
-			r = loginHandler((LoginQueryDTO) dto);
-		} else if (method.equals(RegisterUserQueryDTO.class.getSimpleName())) {
-			r = registerUser((RegisterUserQueryDTO) dto);
-		} else {
-			r = getMapping(dto.getClass().getSimpleName()).apply(dto);
-		}
+		DTO r = getMapping(method).apply(dto);
+
+		this.c.send(new Frame(f.tag, r));
 	}
 
 	public String checkToken(String token) throws TokenInvalido {

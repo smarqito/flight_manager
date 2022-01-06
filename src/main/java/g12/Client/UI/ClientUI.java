@@ -121,10 +121,10 @@ public class ClientUI {
             UnitDTO resp = (UnitDTO) this.c.queryHandler(r);
             switch (resp.getRespCode()) {
                 case 200:
-                    System.out.println("Ja existe um utilizador com o mesmo nome");
+                    System.out.println("Registo efetuado com sucesso!");
                     break;
                 default:
-                    System.out.println("Registo efetuado com sucesso!");
+                    System.out.println("Ja existe um utilizador com o mesmo nome");
                     break;
             }
         } catch (IOException e) {
@@ -145,7 +145,7 @@ public class ClientUI {
     }
 
     public static LocalDate getDate() {
-        while(true) {
+        while (true) {
             try {
                 String s = scin.nextLine();
                 return LocalDate.parse(s);
