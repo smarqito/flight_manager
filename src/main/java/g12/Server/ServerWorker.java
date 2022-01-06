@@ -1,11 +1,25 @@
 package g12.Server;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+import static java.util.Map.entry;
 
 import g12.Middleware.*;
+import g12.Middleware.DTO.DTO;
+import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
+import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
+import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
+import g12.Middleware.DTO.QueryDTO.CloseDayQueryDTO;
+import g12.Middleware.DTO.QueryDTO.LoginQueryDTO;
+import g12.Middleware.DTO.QueryDTO.QueryDTO;
+import g12.Middleware.DTO.QueryDTO.RegisterFlightQueryDTO;
+import g12.Middleware.DTO.QueryDTO.RegisterUserQueryDTO;
+import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
+import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
+import g12.Middleware.DTO.ResponseDTO.LoginDTO;
+import g12.Middleware.DTO.ResponseDTO.UnitDTO;
 import g12.Server.FlightManager.*;
 import g12.Server.FlightManager.Exceptions.DiaFechado;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
@@ -19,6 +33,18 @@ public class ServerWorker implements Runnable {
 
 	private final ServerConnection c;
 	private final IFlightManager model;
+	private Map<String, Function<QueryDTO, DTO>> mapping = Map.ofEntries(
+			entry(LoginQueryDTO.class.getSimpleName(), (x) -> this.loginHandler(x)),
+			entry(RegisterUserQueryDTO.class.getSimpleName(), (x) -> this.registerUser(x)),
+			entry(RegisterFlightQueryDTO.class.getSimpleName(), (x) -> this.registerFlight(x)),
+			entry(CloseDayQueryDTO.class.getSimpleName(), (x) -> this.closeDay(x)),
+			entry(BookFlightQueryDTO.class.getSimpleName(), (x) -> this.bookFlight(x)),
+			entry(CancelBookQueryDTO.class.getSimpleName(), (x) -> this.cancelBook(x)),
+			entry(AvailableFlightsQueryDTO.class.getSimpleName(), (x) -> this.availableFlights(x)));
+
+	private Function<QueryDTO, DTO> getMapping(String m) {
+		return mapping.get(m);
+	}
 
 	/**
 	 * 
@@ -36,7 +62,8 @@ public class ServerWorker implements Runnable {
 			try (c) {
 				try {
 					for (;;) {
-						Query frame = (Query) this.c.receive();
+						Frame frame = this.c.receive();
+						System.out.println(frame.toString());
 						this.requestHandler(frame);
 					}
 				} catch (IOException ignored) {
@@ -47,164 +74,99 @@ public class ServerWorker implements Runnable {
 		}
 	}
 
-	public void requestHandler(Query q) {
-		String method = q.getMethod();
-		try {
-			Response r;
-			if (method.equals("login")) {
-				r = loginHandler(q);
-			} else if (method.equals("registerUser")) {
-				r = registerUser(q);
-			} else {
-				try {
-					String user = checkToken(q.getToken());
-					switch (method) {
-						case "registerFlight":
-							r = registerFlight(q);
-							break;
-						case "closeDay":
-							r = closeDay(user, q);
-							break;
-						case "bookFlight":
-							r = bookFlight(user, q);
-							break;
-						case "cancelBook":
-							r = cancelBook(user, q);
-							break;
-						case "availableFlights":
-							r = availableFlights(q);
-							break;
-						default:
-							// responder pedido mal feito;
-							// erro 400
-							r = new Response(q.tag, 400, "Pedido nao existe");
-							break;
-					}
-				} catch (TokenInvalido e) {
-					// handle wrong token
-					r = new Response(q.tag, 401, e.getMessage());
-				}
-			}
-			c.send(r);
-		} catch (BadRequest br) {
-			// code 400
-		} catch (IOException io) {
-			System.out.println(io.toString());
-		}
+	public void requestHandler(Frame f) throws IOException {
+		QueryDTO dto = (QueryDTO) f.getDto();
+		String method = dto.getClass().getSimpleName();
+		DTO r = getMapping(method).apply(dto);
+
+		this.c.send(new Frame(f.tag, r));
 	}
 
 	public String checkToken(String token) throws TokenInvalido {
 		return model.verifyToken(token);
 	}
 
-	public Response loginHandler(Query q) throws BadRequest {
-		Params p = q.getParams();
-		if (p.size() != 2) {
-			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
-		}
-		Response r;
+	public DTO loginHandler(QueryDTO dto) {
+		LoginQueryDTO q = (LoginQueryDTO) dto;
+		DTO r;
 		try {
-			String token = model.login(p.get(0), p.get(1));
-			r = new Response(q.tag, 200, token);
+			String token = model.login(q.getUser(), q.getPass());
+			r = new LoginDTO(200, token);
 		} catch (LoginInvalido e) {
-			r = new Response(q.tag, 403, e.getMessage());
+			r = new UnitDTO(403);
 		}
 		return r;
 	}
 
-	public Response registerUser(Query q) throws BadRequest {
-		Params p = q.getParams();
-		if (p.size() != 2) {
-			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
-		}
+	public DTO registerUser(QueryDTO dto) {
+		RegisterUserQueryDTO q = (RegisterUserQueryDTO) dto;
 		try {
-			this.model.registerUser(p.get(0), p.get(1));
-			return new Response(q.tag, 200, "Registo efetuado com sucesso!");
+			this.model.registerUser(q.getUser(), q.getPass());
+			return new UnitDTO(200);
 		} catch (UserJaExisteException e) {
-			return new Response(q.tag, 400, "Ja existe um utilizador com o mesmo nome");
+			return new UnitDTO(400);
 		}
 	}
 
-	public Response registerFlight(Query q) throws BadRequest {
-		Params p = q.getParams();
-		if (p.size() != 3) {
-			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
-		}
-		try {
-			this.model.registerFlight(p.get(0), p.get(1), Integer.parseInt(p.get(2)));
-			return new Response(q.tag, 200, "Registo efetuado com sucesso!");
-		} catch (NumberFormatException e) {
-			throw new BadRequest("Verifique os parametros inseridos!");
-		}
+	public DTO registerFlight(QueryDTO dto) {
+		RegisterFlightQueryDTO q = (RegisterFlightQueryDTO) dto;
+		this.model.registerFlight(q.getOrigem(), q.getDest(), q.getCapacidade());
+		return new UnitDTO(200);
 
 	}
 
-	public Response closeDay(String user, Query q) throws BadRequest {
-		Params p = q.getParams();
-		if (p.size() != 0) {
-			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
-		}
+	public DTO closeDay(QueryDTO dto) {
 		try {
+			String user = checkToken(dto.getToken());
 			this.model.closeDay(user);
-			return new Response(q.tag, 200, "Dia encerrado com sucesso!");
+			return new UnitDTO(200);
 		} catch (UserNaoExistente | NotAllowed e) {
-			return new Response(q.tag, 400, "Nao tem permissoes para encerrar o dia!");
+			return new UnitDTO(400);
 		} catch (DiaFechado e) {
-			return new Response(q.tag, 400, "Nao tem permissoes para encerrar o dia!");
+			return new UnitDTO(401);
+		} catch (TokenInvalido e) {
+			return new UnitDTO(401);
 		}
 	}
 
-	public Response bookFlight(String user, Query q) throws BadRequest {
+	public DTO bookFlight(QueryDTO dto) {
 		// pelo menos 4 parametros
 		// 1o ate n-2 -> percurso
 		// n-1 e n -> de; ate
-		Params p = q.getParams();
-		int size = p.size();
-		if (size < 4) {
-			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
-		}
-		List<String> perc = new ArrayList<>(size - 2);
-		for (int i = 0; i < size - 2; i++) {
-			perc.add(p.get(i));
-		}
+		BookFlightQueryDTO q = (BookFlightQueryDTO) dto;
 		try {
-			String bookId = this.model.bookFlight(user, perc, LocalDate.parse(p.get(size - 2)),
-					LocalDate.parse(p.get(size - 1)));
-			return new Response(q.tag, 200, bookId);
+			String user = checkToken(dto.getToken());
+			String bookId = this.model.bookFlight(user, q.getPercurso(), q.getDe(), q.getAte());
+			return new BookFlightDTO(200, bookId);
 		} catch (UserIsNotClient | UserNaoExistente e) {
-			return new Response(q.tag, 404, "Utilizador nao existe ou nao é cliente!");
+			return new UnitDTO(404);
+		} catch (TokenInvalido e) {
+			return new UnitDTO(401);
 		}
 	}
 
-	public Response cancelBook(String user, Query q) throws BadRequest {
-		Params p = q.getParams();
-		int size = p.size();
-		if (size != 1) {
-			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
-		}
+	public DTO cancelBook(QueryDTO dto) {
+		CancelBookQueryDTO q = (CancelBookQueryDTO) dto;
 		try {
-			if (this.model.cancelBook(user, p.get(0))) {
-				return new Response(q.tag, 200, "Cancelamento com sucesso");
+			String user = checkToken(dto.getToken());
+			if (this.model.cancelBook(user, q.getBookId())) {
+				return new UnitDTO(200);
 			}
-			return new Response(q.tag, 300, "Cancelamento nao sucedido");
+			return new UnitDTO(300);
 		} catch (UserNaoExistente | UserIsNotClient e) {
-			return new Response(q.tag, 404, "Utilizador nao existe ou nao e cliente");
+			return new UnitDTO(404);
 		} catch (ReservaNaoExiste e) {
-			return new Response(q.tag, 404, "Utilizador nao existe ou nao e cliente");
+			return new UnitDTO(404);
+		} catch (TokenInvalido e) {
+			return new UnitDTO(404);
 		}
-
 	}
 
-	public Response availableFlights(Query q) throws BadRequest {
-		Params p = q.getParams();
-		int size = p.size();
-		if (size != 0) {
-			throw new BadRequest("Pedido mal construido, parametros nao correspondem");
-		}
+	public DTO availableFlights(QueryDTO dto) {
 		this.model.availableFlights();
 		// TODO
-		return new Response(q.tag, 200, "login sucesso");
-
+		return new AvailableFlightsDTO(200);
+		// TODO
 	}
 
 }

@@ -45,7 +45,7 @@ public class UserManager implements IUserManager {
 		}
 		try {
 			if (u.isPassValid(pass)) {
-				String token = this.generateToken(user);
+				String token = generateToken(user);
 				u.setToken(token);
 				return token;
 			} else {
@@ -201,7 +201,12 @@ public class UserManager implements IUserManager {
 	}
 
 	public String generateToken(String user) {
-		String token = JWT.create().withClaim("User", user).sign(this.alg);
+		boolean isAdmin = false;
+		try {
+			isAdmin = this.isAdmin(user);
+		} catch (UserNaoExistente e) {
+		}
+		String token = JWT.create().withClaim("User", user).withClaim("isAdmin", isAdmin).sign(this.alg);
 		return token;
 	}
 

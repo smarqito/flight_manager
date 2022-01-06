@@ -3,6 +3,7 @@ package g12.Server.FlightManager.UserManager;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.impl.JWTParser;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
@@ -21,7 +22,8 @@ public class UserTest {
         
 
 
-
+        DecodedJWT ver = JWT.decode(token);
+        boolean s = ver.getClaim("isAdmin").asBoolean();
 
         JWTVerifier verifier = JWT.require(alg)
                 .build();

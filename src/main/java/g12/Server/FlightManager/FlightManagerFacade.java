@@ -13,6 +13,12 @@ public class FlightManagerFacade implements IFlightManager {
 	private IBookingManager booking;
 	private IUserManager users;
 
+	
+	public FlightManagerFacade() {
+		booking = new BookingManager();
+		users = new UserManager();
+	}
+
 	/**
 	 * 
 	 * @param user
