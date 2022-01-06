@@ -25,14 +25,14 @@ public interface IBookingManager {
 	 * @param de
 	 * @param ate
 	 */
-	String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel;
+	String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente, BookingDayJaExiste, DiaFechado, VooJaExiste;
 
 	/**
 	 * 
 	 * @param bookId
 	 * @throws ReservaNaoExiste
 	 */
-	void removeBooking(String bookId) throws ReservaNaoExiste, VooNaoExistente;
+	void removeBooking(String bookId) throws ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente;
 
 	List<Voo> getAvailableFlights();
 
