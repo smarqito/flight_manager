@@ -1,9 +1,6 @@
 package g12.Server.FlightManager.BookingManager;
 
-import g12.Server.FlightManager.Exceptions.DiaFechado;
-import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
-import g12.Server.FlightManager.Exceptions.VooJaExiste;
-import g12.Server.FlightManager.Exceptions.VooNaoExistente;
+import g12.Server.FlightManager.Exceptions.*;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -53,7 +50,7 @@ public class BookingManager implements IBookingManager {
 	}
 
 	@Override
-	public Boolean closeDay() throws DiaFechado {
+	public Boolean closeDay() throws DiaFechado, BookingDayNaoExistente {
 		this.l.lock();
 		BookingDay bd;
 		try {
@@ -102,9 +99,15 @@ public class BookingManager implements IBookingManager {
 		throw new UnsupportedOperationException();
 	}
 
-	public BookingDay getBookingDay(LocalDate date) {
-		// TODO - implement BookingManager.getBookingDay
-		throw new UnsupportedOperationException();
+	public BookingDay getBookingDay(LocalDate date) throws BookingDayNaoExistente {
+		this.l.lock();
+		try {
+			if(this.voos.stream().noneMatch(bd -> bd.getDate().equals(date))) throw new BookingDayNaoExistente();
+			return this.voos.stream().filter(bday -> bday.getDate().equals(date)).collect(Collectors.toList()).get(0);
+		}
+		finally {
+			this.l.unlock();
+		}
 	}
 
 	/**
@@ -115,30 +118,71 @@ public class BookingManager implements IBookingManager {
 	 * 
 	 * @param date
 	 */
-	public BookingDay addBookingDay(LocalDate date) {
-		// TODO - implement BookingManager.addBookingDay
-		throw new UnsupportedOperationException();
+	public BookingDay addBookingDay(LocalDate date) throws DiaFechado, VooJaExiste {
+		this.l.lock();
+		BookingDay bd;
+		try {
+			bd = new BookingDay(date);
+			this.voos.add(bd);
+
+			bd.l.lock();
+		}
+		finally {
+			this.l.unlock();
+		}
+
+		try{
+			for(Voo v : this.voosDiarios) bd.addVoo(v);
+			return bd;
+		}
+		finally {
+			bd.l.unlock();
+		}
 	}
 
 	public Reserva getReserva(String id) throws ReservaNaoExiste {
-		if (!this.reservas.containsKey(id))
-			throw new ReservaNaoExiste("Reserva +" + id + " não existe.");
-		return this.reservas.get(id);
+		this.l.lock();
+		try {
+			if (!this.reservas.containsKey(id)) throw new ReservaNaoExiste("Reserva +" + id + " não existe.");
+			return this.reservas.get(id);
+		}
+		finally {
+			this.l.unlock();
+		}
 	}
 
 	public String addReserva(String user, List<InfoVoo> infoVoos) {
-		// TODO - implement BookingManager.addReserva
-		throw new UnsupportedOperationException();
-	}
+		this.l.lock();
+		Reserva r;
+		try {
+			r = new Reserva(user);
+			this.reservas.put(r.getId(), r);
 
-	public Boolean existeVoo(String orig, String dest) {
-		return this.voosDiarios.stream().anyMatch(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest));
+			r.l.lock();
+		}
+		finally {
+			this.l.unlock();
+		}
+
+		try {
+			r.addVooInfo(infoVoos);
+			return r.getId();
+		}
+		finally {
+			r.l.unlock();
+		}
 	}
 
 	public Voo getVooDiario(String orig, String dest) throws VooNaoExistente {
-		if (!existeVoo(orig, dest))
-			throw new VooNaoExistente();
-		return this.voosDiarios.stream().filter(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest))
-				.collect(Collectors.toList()).get(0);
+		this.l.lock();
+		try {
+			if (this.voosDiarios.stream().noneMatch(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest))) throw new VooNaoExistente();
+
+			return this.voosDiarios.stream().filter(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest))
+					.collect(Collectors.toList()).get(0);
+		}
+		finally {
+			this.l.unlock();
+		}
 	}
 }
