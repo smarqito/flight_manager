@@ -5,8 +5,10 @@ import java.util.List;
 
 import g12.Middleware.TokenInvalido;
 import g12.Server.FlightManager.BookingManager.*;
+import g12.Server.FlightManager.Exceptions.DiaFechado;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
 import g12.Server.FlightManager.Exceptions.NotAllowed;
+import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
 import g12.Server.FlightManager.Exceptions.UserIsNotClient;
 import g12.Server.FlightManager.Exceptions.UserJaExisteException;
 import g12.Server.FlightManager.Exceptions.UserNaoExistente;
@@ -53,8 +55,9 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @param user
 	 * @throws UserNaoExistente
 	 * @throws NotAllowed
+	 * @throws DiaFechado
 	 */
-	public Boolean closeDay(String user) throws UserNaoExistente, NotAllowed {
+	public Boolean closeDay(String user) throws UserNaoExistente, NotAllowed, DiaFechado {
 		if (users.isAdmin(user)) {
 			return booking.closeDay();
 		}
@@ -86,8 +89,9 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @param id
 	 * @throws UserIsNotClient
 	 * @throws UserNaoExistente
+	 * @throws ReservaNaoExiste
 	 */
-	public Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient {
+	public Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste {
 		if (this.users.isClient(user)) {
 			User u = users.getUser(user);
 			try {

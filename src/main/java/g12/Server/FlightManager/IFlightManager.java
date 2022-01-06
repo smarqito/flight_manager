@@ -5,8 +5,10 @@ import java.util.List;
 
 import g12.Middleware.TokenInvalido;
 import g12.Server.FlightManager.BookingManager.*;
+import g12.Server.FlightManager.Exceptions.DiaFechado;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
 import g12.Server.FlightManager.Exceptions.NotAllowed;
+import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
 import g12.Server.FlightManager.Exceptions.UserIsNotClient;
 import g12.Server.FlightManager.Exceptions.UserJaExisteException;
 import g12.Server.FlightManager.Exceptions.UserNaoExistente;
@@ -49,8 +51,9 @@ public interface IFlightManager {
 	 * @throws UserNaoExistente Caso o utilizador nao exista
 	 * @throws NotAllowed       Caso o utilizador nao tenha permissoes (nao seja
 	 *                          admin)
+	 * @throws DiaFechado
 	 */
-	Boolean closeDay(String user) throws UserNaoExistente, NotAllowed;
+	Boolean closeDay(String user) throws UserNaoExistente, NotAllowed, DiaFechado;
 
 	/**
 	 * Efetua a marcação de uma reserva que passe pelo percurso pretendido
@@ -81,8 +84,9 @@ public interface IFlightManager {
 	 * @param id   Id da reserva
 	 * @throws UserIsNotClient  Caso o utilizador nao seja cliente
 	 * @throws UserNaoExistente Caso o user nao exista
+	 * @throws ReservaNaoExiste
 	 */
-	Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient;
+	Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste;
 
 	/**
 	 * Calcula os voos disponiveis para o dia
