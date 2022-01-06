@@ -5,6 +5,7 @@ import java.util.List;
 
 import g12.Server.FlightManager.Exceptions.*;
 
+
 public interface IBookingManager {
 
 	/**
@@ -15,7 +16,7 @@ public interface IBookingManager {
 	 */
 	void addFlight(String orig, String dest, Integer cap);
 
-	Boolean closeDay() throws DiaFechado;
+	Boolean closeDay() throws DiaFechado, BookingDayNaoExistente;
 
 	/**
 	 * 
