@@ -154,8 +154,26 @@ public class BookingManager implements IBookingManager {
 	}
 
 	public Voos getAvailableFlights() {
-		// TODO - implement BookingManager.getAvailableFlights
-		throw new UnsupportedOperationException();
+		Voos voos = new Voos();
+		this.l.lock();
+		try {
+			try {
+				for(BookingDay bd : this.voos){
+					bd.l.lock();
+					for(Voo v : bd.getVoos().values()){
+						if(v.temLugarLivres())
+							voos.add(new InfoVoo(v.getId(), v.getOrigem(), v.getDestino(), bd.getDate()));
+					}
+				}
+			} finally {
+				for(BookingDay bd : this.voos){
+					bd.l.unlock();
+				}
+			}
+		} finally {
+			this.l.unlock();
+		}
+		return voos;
 	}
 
 	public BookingDay getBookingDay(LocalDate date) {
