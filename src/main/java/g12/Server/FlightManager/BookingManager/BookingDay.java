@@ -92,29 +92,28 @@ public class BookingDay implements Comparable<BookingDay> {
 	 * 
 	 * @param percurso
 	 * @return
-	 * @throws PercusoNaoDisponivel
 	 * @throws VooNaoExistente
 	 * @throws CapacidadeMaximaAtingida
 	 * @throws DiaFechado
 	 */
-	public List<InfoVoo> addPassager(List<String> percurso)
-			throws PercusoNaoDisponivel, VooNaoExistente, CapacidadeMaximaAtingida, DiaFechado {
+	public List<InfoVoo> addPassager(List<String> percurso) throws VooNaoExistente, DiaFechado {
 		if (!isOpen)
 			throw new DiaFechado("O dia " + this.date.toString() + " esta fechado");
 
 		List<InfoVoo> ret = new ArrayList<>();
-		ListIterator<String> it = percurso.listIterator();
 
-		while (it.hasNext()) {
-			it.next();
-			if (it.hasPrevious()) {
-				if (!existeVoo(it.previous(), it.next()))
-					throw new PercusoNaoDisponivel("O percurso não está disponível.");
-				Voo curr = getVooOD(it.previous(), it.next());
-				curr.addUser();
+		for (int i = 0; i < percurso.size() - 1; i++) {
+				Voo curr = getVooOD(percurso.get(i), percurso.get(i+1));
+				curr.l.lock();
+				try {
+					curr.addUser();
+				}catch (CapacidadeMaximaAtingida e) {
+					return ret;
+				} finally {
+					curr.l.unlock();
+				}
 				ret.add(new InfoVoo(curr.getId(), curr.getOrigem(), curr.getDestino(), this.date));
 			}
-		}
 		return ret;
 	}
 

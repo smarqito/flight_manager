@@ -68,6 +68,15 @@ public class BookingManager implements IBookingManager {
 	}
 
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel {
+		l.lock();
+		try {
+			for (int i = 0; i < percurso.size() - 1; i++) {
+				if (!existeVoo(percurso.get(i), percurso.get(i + 1)))
+					throw new PercusoNaoDisponivel("O percurso não está disponível.");
+			}
+		} finally {
+			l.unlock();
+		}
 		Reserva r = new Reserva(user);
 		while (!percurso.isEmpty() && de.isBefore(ate)) {
 			l.lock();
@@ -82,7 +91,8 @@ public class BookingManager implements IBookingManager {
 				List<InfoVoo> info = bd.addPassager(percurso);
 				r.addVooInfo(info);
 				info.forEach(x -> percurso.remove(x.origem));
-			} catch (CapacidadeMaximaAtingida | DiaFechado e) {
+				de = de.plusDays(1);
+			} catch (DiaFechado e) {
 				de = de.plusDays(1);
 			} finally {
 				bd.l.unlock();
