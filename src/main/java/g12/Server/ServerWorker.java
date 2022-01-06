@@ -50,42 +50,42 @@ public class ServerWorker implements Runnable {
 	public void requestHandler(Query q) {
 		String method = q.getMethod();
 		try {
+			Response r;
 			if (method.equals("login")) {
-				loginHandler(q);
+				r = loginHandler(q);
+			} else if (method.equals("registerUser")) {
+				r = registerUser(q);
 			} else {
 				try {
 					String user = checkToken(q.getToken());
-					switch (q.getMethod()) {
-						case "login":
-							break;
-						case "registerUser":
-							registerUser(q);
-							break;
+					switch (method) {
 						case "registerFlight":
-							registerFlight(q);
+							r = registerFlight(q);
 							break;
 						case "closeDay":
-							closeDay(user, q);
+							r = closeDay(user, q);
 							break;
 						case "bookFlight":
-							bookFlight(user, q);
+							r = bookFlight(user, q);
 							break;
 						case "cancelBook":
-							cancelBook(user, q);
+							r = cancelBook(user, q);
 							break;
 						case "availableFlights":
-							availableFlights(q);
+							r = availableFlights(q);
 							break;
 						default:
 							// responder pedido mal feito;
 							// erro 400
+							r = new Response(q.tag, 400, "Pedido nao existe");
 							break;
 					}
 				} catch (TokenInvalido e) {
 					// handle wrong token
-					c.send(new Response(q.tag, 401, e.getMessage()));
+					r = new Response(q.tag, 401, e.getMessage());
 				}
 			}
+			c.send(r);
 		} catch (BadRequest br) {
 			// code 400
 		} catch (IOException io) {
@@ -146,7 +146,7 @@ public class ServerWorker implements Runnable {
 		}
 		try {
 			this.model.closeDay(user);
-			return new Response(q.tag, 200, "");
+			return new Response(q.tag, 200, "Dia encerrado com sucesso!");
 		} catch (UserNaoExistente | NotAllowed e) {
 			return new Response(q.tag, 400, "Nao tem permissoes para encerrar o dia!");
 		} catch (DiaFechado e) {
@@ -168,7 +168,8 @@ public class ServerWorker implements Runnable {
 			perc.add(p.get(i));
 		}
 		try {
-			String bookId = this.model.bookFlight(user, perc, LocalDate.parse(p.get(size - 2)), LocalDate.parse(p.get(size - 1)));
+			String bookId = this.model.bookFlight(user, perc, LocalDate.parse(p.get(size - 2)),
+					LocalDate.parse(p.get(size - 1)));
 			return new Response(q.tag, 200, bookId);
 		} catch (UserIsNotClient | UserNaoExistente e) {
 			return new Response(q.tag, 404, "Utilizador nao existe ou nao é cliente!");
