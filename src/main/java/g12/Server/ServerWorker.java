@@ -1,6 +1,7 @@
 package g12.Server;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -8,6 +9,7 @@ import static java.util.Map.entry;
 
 import g12.Middleware.*;
 import g12.Middleware.DTO.DTO;
+import g12.Middleware.DTO.ExceptionDTO.RequestExceptionDTO;
 import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
 import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
 import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
@@ -21,13 +23,20 @@ import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
 import g12.Middleware.DTO.ResponseDTO.LoginDTO;
 import g12.Middleware.DTO.ResponseDTO.UnitDTO;
 import g12.Server.FlightManager.*;
+import g12.Server.FlightManager.BookingManager.Voo;
+import g12.Server.FlightManager.Exceptions.BookingDayJaExiste;
+import g12.Server.FlightManager.Exceptions.BookingDayNaoExistente;
 import g12.Server.FlightManager.Exceptions.DiaFechado;
 import g12.Server.FlightManager.Exceptions.LoginInvalido;
 import g12.Server.FlightManager.Exceptions.NotAllowed;
+import g12.Server.FlightManager.Exceptions.PercusoNaoDisponivel;
+import g12.Server.FlightManager.Exceptions.ReservaIndisponivel;
 import g12.Server.FlightManager.Exceptions.ReservaNaoExiste;
 import g12.Server.FlightManager.Exceptions.UserIsNotClient;
 import g12.Server.FlightManager.Exceptions.UserJaExisteException;
 import g12.Server.FlightManager.Exceptions.UserNaoExistente;
+import g12.Server.FlightManager.Exceptions.VooJaExiste;
+import g12.Server.FlightManager.Exceptions.VooNaoExistente;
 
 public class ServerWorker implements Runnable {
 
@@ -58,19 +67,25 @@ public class ServerWorker implements Runnable {
 
 	@Override
 	public void run() {
+		int tag = 0;
 		try {
 			try (c) {
-				try {
-					for (;;) {
-						Frame frame = this.c.receive();
-						System.out.println(frame.toString());
-						this.requestHandler(frame);
+				for (;;) {
+					try {
+						try {
+							Frame frame = this.c.receive();
+							tag = frame.tag;
+							System.out.println(frame.toString());
+							this.requestHandler(frame);
+						} catch (IOException ignored) {
+							this.c.send(new Frame(tag, new RequestExceptionDTO(ignored.getMessage())));
+						}
+					} catch (Exception alsoignored) {
+						this.c.send(new Frame(tag, new RequestExceptionDTO(alsoignored.getMessage())));
 					}
-				} catch (IOException ignored) {
 				}
 			}
-		} catch (Exception alsoignored) {
-			// faz nada
+		} catch (Exception e) {
 		}
 	}
 
@@ -93,7 +108,7 @@ public class ServerWorker implements Runnable {
 			String token = model.login(q.getUser(), q.getPass());
 			r = new LoginDTO(200, token);
 		} catch (LoginInvalido e) {
-			r = new UnitDTO(403);
+			r = new LoginDTO(403, "");
 		}
 		return r;
 	}
@@ -126,6 +141,8 @@ public class ServerWorker implements Runnable {
 			return new UnitDTO(401);
 		} catch (TokenInvalido e) {
 			return new UnitDTO(401);
+		} catch (BookingDayNaoExistente e) {
+			return new UnitDTO(402);
 		}
 	}
 
@@ -138,10 +155,15 @@ public class ServerWorker implements Runnable {
 			String user = checkToken(dto.getToken());
 			String bookId = this.model.bookFlight(user, q.getPercurso(), q.getDe(), q.getAte());
 			return new BookFlightDTO(200, bookId);
-		} catch (UserIsNotClient | UserNaoExistente e) {
+		} catch (UserIsNotClient | UserNaoExistente | BookingDayJaExiste | VooJaExiste | BookingDayNaoExistente
+				| ReservaIndisponivel | DiaFechado e) {
 			return new UnitDTO(404);
 		} catch (TokenInvalido e) {
 			return new UnitDTO(401);
+		} catch (VooNaoExistente e) {
+			return new UnitDTO(402);
+		} catch (PercusoNaoDisponivel e) {
+			return new UnitDTO(403);
 		}
 	}
 
@@ -153,7 +175,7 @@ public class ServerWorker implements Runnable {
 				return new UnitDTO(200);
 			}
 			return new UnitDTO(300);
-		} catch (UserNaoExistente | UserIsNotClient e) {
+		} catch (UserNaoExistente | UserIsNotClient | VooNaoExistente | BookingDayNaoExistente e) {
 			return new UnitDTO(404);
 		} catch (ReservaNaoExiste e) {
 			return new UnitDTO(404);
@@ -163,7 +185,7 @@ public class ServerWorker implements Runnable {
 	}
 
 	public DTO availableFlights(QueryDTO dto) {
-		this.model.availableFlights();
+		List<Voo> voos = this.model.availableFlights();
 		// TODO
 		return new AvailableFlightsDTO(200);
 		// TODO

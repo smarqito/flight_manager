@@ -29,6 +29,7 @@ public class UserManager implements IUserManager {
 
 	public UserManager() {
 		users = new HashMap<>();
+		this.users.put("marco", new Admin("marco", "sousa"));
 	}
 
 	@Override

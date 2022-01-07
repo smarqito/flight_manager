@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 
 import g12.Client.Client;
+import g12.Middleware.BadRequest;
 import g12.Middleware.Params;
 import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
 import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
@@ -69,7 +70,7 @@ public class MenuCliente {
             AvailableFlightsQueryDTO q = new AvailableFlightsQueryDTO();
             AvailableFlightsDTO r = (AvailableFlightsDTO) this.c.queryHandler(q);
 
-        } catch (IOException e) {
+        } catch (IOException | BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }
@@ -102,11 +103,17 @@ public class MenuCliente {
                 case 401:
                     System.out.println("Nao tem permissoes.");
                     break;
+                case 402:
+                    System.out.print("Voo não existe!");
+                    break;
+                case 403:
+                    System.out.println("Percurso não disponível!");
+                    break;
                 default:
                     System.out.println("Recusado.Verifique os parametros inseridos!");
                     break;
             }
-        } catch (IOException e) {
+        } catch (IOException | BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }
@@ -134,7 +141,7 @@ public class MenuCliente {
                     System.out.println("Utilizador nao existe ou nao e cliente");
                     break;
             }
-        } catch (IOException e) {
+        } catch (IOException | BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }

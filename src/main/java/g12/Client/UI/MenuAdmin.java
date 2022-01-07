@@ -3,6 +3,7 @@ package g12.Client.UI;
 import java.io.IOException;
 
 import g12.Client.Client;
+import g12.Middleware.BadRequest;
 import g12.Middleware.DTO.QueryDTO.CloseDayQueryDTO;
 import g12.Middleware.DTO.QueryDTO.RegisterFlightQueryDTO;
 import g12.Middleware.DTO.ResponseDTO.UnitDTO;
@@ -47,7 +48,7 @@ public class MenuAdmin {
         System.out.println("Insira o destino do seu voo:");
         String dest = ClientUI.scin.nextLine();
 
-        System.out.println("Insira a capcidade:");
+        System.out.println("Insira a capacidade:");
         Integer cap = ClientUI.getInt();
 
         try {
@@ -57,7 +58,7 @@ public class MenuAdmin {
             if (r.getRespCode().equals(200)) {
                 System.out.println("Registo efetuado com sucesso!");
             }
-        } catch (IOException e) {
+        } catch (IOException | BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
 
@@ -76,11 +77,14 @@ public class MenuAdmin {
                 case 200:
                     System.out.println("Pedido efetuado com sucesso!");
                     break;
+                case 402:
+                    System.out.println("O dia não existe!");
+                    break;
                 default:
                     System.out.println("Nao tem permissoes para encerrar o dia!");
                     break;
             }
-        } catch (IOException e) {
+        } catch (IOException | BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
 

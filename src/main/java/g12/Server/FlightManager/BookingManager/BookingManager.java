@@ -67,7 +67,8 @@ public class BookingManager implements IBookingManager {
 		}
 	}
 
-	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayJaExiste, DiaFechado, VooJaExiste {
+	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente,
+			ReservaIndisponivel, PercusoNaoDisponivel, BookingDayJaExiste, DiaFechado, VooJaExiste {
 		l.lock();
 		try {
 			for (int i = 0; i < percurso.size() - 1; i++) {
@@ -117,7 +118,7 @@ public class BookingManager implements IBookingManager {
 		private List<String> idList = new ArrayList<>();
 		private LocalDate data;
 
-		public VooIdData(String id, LocalDate data){
+		public VooIdData(String id, LocalDate data) {
 			this.idList.add(id);
 			this.data = data;
 		}
@@ -130,7 +131,7 @@ public class BookingManager implements IBookingManager {
 			return data;
 		}
 
-		public void addId(String id){
+		public void addId(String id) {
 			this.idList.add(id);
 		}
 
@@ -146,26 +147,27 @@ public class BookingManager implements IBookingManager {
 		Reserva r;
 		try {
 			r = this.getReserva(bookId);
-			//falta verificar se existe algum lock à espera
+			// falta verificar se existe algum lock à espera
 			this.reservas.remove(bookId);
 			r.l.lock();
 		} finally {
-			this.l.unlock();			
+			this.l.unlock();
 		}
 		Set<VooIdData> voosReservados = new HashSet<>();
 		try {
-			for(InfoVoo i : r.getInfoVoos()){
+			for (InfoVoo i : r.getInfoVoos()) {
 				try {
-					VooIdData v = voosReservados.stream().filter(x -> x.getData().equals(i.getData())).findFirst().get();
+					VooIdData v = voosReservados.stream().filter(x -> x.getData().equals(i.getData())).findFirst()
+							.get();
 					v.addId(i.getId());
-				} catch (NoSuchElementException e){
+				} catch (NoSuchElementException e) {
 					voosReservados.add(new VooIdData(i.getId(), i.getData()));
 				}
 			}
 		} finally {
 			r.l.unlock();
 		}
-		for(VooIdData v : voosReservados) {
+		for (VooIdData v : voosReservados) {
 			this.l.lock();
 			BookingDay bd;
 			try {
@@ -175,7 +177,7 @@ public class BookingManager implements IBookingManager {
 				l.unlock();
 			}
 			Voo voo;
-			for(String id : v.getIdList()) {
+			for (String id : v.getIdList()) {
 				try {
 					voo = bd.getVoo(id);
 					voo.l.lock();
@@ -203,11 +205,14 @@ public class BookingManager implements IBookingManager {
 	}
 
 	public BookingDay getBookingDay(LocalDate date) throws BookingDayNaoExistente {
+		this.l.lock();
 		try {
-			if(this.voos.stream().noneMatch(bd -> bd.getDate().equals(date))) throw new BookingDayNaoExistente();
-			return this.voos.stream().filter(bday -> bday.getDate().equals(date)).collect(Collectors.toList()).get(0);
-		}
-		finally {
+			try {
+				return this.voos.stream().filter(bday -> bday.getDate().equals(date)).findFirst().get();
+			} catch (NoSuchElementException e) {
+				throw new BookingDayNaoExistente();
+			}
+		} finally {
 			this.l.unlock();
 		}
 	}
@@ -222,7 +227,7 @@ public class BookingManager implements IBookingManager {
 	 */
 	public BookingDay addBookingDay(LocalDate date) throws DiaFechado, VooJaExiste, BookingDayJaExiste {
 		this.l.lock();
-		if(this.voos.stream().anyMatch(bd -> bd.getDate().equals(date)))
+		if (this.voos.stream().anyMatch(bd -> bd.getDate().equals(date)))
 			throw new BookingDayJaExiste();
 		BookingDay bd;
 		List<Voo> vdiarios;
@@ -231,15 +236,14 @@ public class BookingManager implements IBookingManager {
 			this.voos.add(bd);
 			vdiarios = this.voosDiarios;
 			bd.l.lock();
-		}
-		finally {
+		} finally {
 			this.l.unlock();
 		}
-		try{
-			for(Voo v : vdiarios) bd.addVoo(v);
+		try {
+			for (Voo v : vdiarios)
+				bd.addVoo(v);
 			return bd;
-		}
-		finally {
+		} finally {
 			bd.l.unlock();
 		}
 	}
@@ -247,10 +251,10 @@ public class BookingManager implements IBookingManager {
 	public Reserva getReserva(String id) throws ReservaNaoExiste {
 		this.l.lock();
 		try {
-			if (!this.reservas.containsKey(id)) throw new ReservaNaoExiste("Reserva +" + id + " não existe.");
+			if (!this.reservas.containsKey(id))
+				throw new ReservaNaoExiste("Reserva +" + id + " não existe.");
 			return this.reservas.get(id);
-		}
-		finally {
+		} finally {
 			this.l.unlock();
 		}
 	}
@@ -262,8 +266,7 @@ public class BookingManager implements IBookingManager {
 		try {
 			this.reservas.put(r.getId(), r);
 			r.l.lock();
-		}
-		finally {
+		} finally {
 			this.l.unlock();
 		}
 		try {
@@ -280,12 +283,12 @@ public class BookingManager implements IBookingManager {
 	public Voo getVooDiario(String orig, String dest) throws VooNaoExistente {
 		this.l.lock();
 		try {
-			if (this.voosDiarios.stream().noneMatch(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest))) throw new VooNaoExistente();
+			if (this.voosDiarios.stream().noneMatch(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest)))
+				throw new VooNaoExistente();
 
 			return this.voosDiarios.stream().filter(v -> v.getOrigem().equals(orig) && v.getDestino().equals(dest))
 					.collect(Collectors.toList()).get(0);
-		}
-		finally {
+		} finally {
 			this.l.unlock();
 		}
 	}

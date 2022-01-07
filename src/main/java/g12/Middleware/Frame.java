@@ -9,6 +9,7 @@ import java.util.Map;
 import static java.util.Map.entry;
 
 import g12.Middleware.DTO.DTO;
+import g12.Middleware.DTO.ExceptionDTO.RequestExceptionDTO;
 import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
 import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
 import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
@@ -33,7 +34,8 @@ public class Frame {
             entry(CloseDayQueryDTO.class.getSimpleName(), CloseDayQueryDTO.class),
             entry(BookFlightQueryDTO.class.getSimpleName(), BookFlightQueryDTO.class),
             entry(CancelBookQueryDTO.class.getSimpleName(), CancelBookQueryDTO.class),
-            entry(AvailableFlightsQueryDTO.class.getSimpleName(), AvailableFlightsQueryDTO.class));
+            entry(AvailableFlightsQueryDTO.class.getSimpleName(), AvailableFlightsQueryDTO.class),
+            entry(RequestExceptionDTO.class.getSimpleName(), RequestExceptionDTO.class));
 
     static Class<? extends DTO> getMapping(String m) {
         return mapping.get(m);

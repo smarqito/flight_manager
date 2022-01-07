@@ -9,6 +9,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
 import g12.Client.Client;
+import g12.Middleware.BadRequest;
 import g12.Middleware.Params;
 import g12.Middleware.DTO.DTO;
 import g12.Middleware.DTO.QueryDTO.LoginQueryDTO;
@@ -99,7 +100,7 @@ public class ClientUI {
                 } else {
                     System.out.println("O login do utilizador está inválido!");
                 }
-            } catch (IOException e) {
+            } catch (IOException | BadRequest e) {
                 System.out.println("Houve problemas de comunicação. Tente novamente.");
             }
         }
@@ -127,7 +128,7 @@ public class ClientUI {
                     System.out.println("Ja existe um utilizador com o mesmo nome");
                     break;
             }
-        } catch (IOException e) {
+        } catch (IOException | BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }

@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.net.Socket;
 
 import g12.Client.UI.ClientUI;
+import g12.Middleware.BadRequest;
 import g12.Middleware.ClientConnection;
 import g12.Middleware.Frame;
 import g12.Middleware.DTO.DTO;
+import g12.Middleware.DTO.ExceptionDTO.RequestExceptionDTO;
 import g12.Middleware.DTO.ResponseDTO.LoginDTO;
 
 public class Client {
@@ -33,13 +35,18 @@ public class Client {
 		}
 	}
 
-	public DTO queryHandler(DTO dto) throws IOException {
+	public DTO queryHandler(DTO dto) throws IOException, BadRequest {
 		Frame f = new Frame(tag++, dto);
 		c.send(f);
-		return c.receive().getDto();
+		DTO respDTO = c.receive().getDto();
+		if (respDTO.getClass().getSimpleName().equals(RequestExceptionDTO.class.getSimpleName())) {
+			RequestExceptionDTO rq = (RequestExceptionDTO) respDTO;
+			throw new BadRequest(rq.getMessage());
+		}
+		return respDTO;
 	}
 
-	public LoginDTO loginHandler(DTO dto) throws IOException {
+	public LoginDTO loginHandler(DTO dto) throws IOException, BadRequest {
 		LoginDTO r = (LoginDTO) queryHandler(dto);
 		if (r.getRespCode().equals(200)) {
 			this.c.setToken(r.getToken());
