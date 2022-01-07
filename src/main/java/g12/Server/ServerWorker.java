@@ -22,6 +22,8 @@ import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
 import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
 import g12.Middleware.DTO.ResponseDTO.LoginDTO;
 import g12.Middleware.DTO.ResponseDTO.UnitDTO;
+import g12.Middleware.DTO.VooDTO;
+import g12.Middleware.DTO.VoosDTO;
 import g12.Server.FlightManager.*;
 import g12.Server.FlightManager.BookingManager.Voo;
 import g12.Server.FlightManager.Exceptions.BookingDayJaExiste;
@@ -185,10 +187,18 @@ public class ServerWorker implements Runnable {
 	}
 
 	public DTO availableFlights(QueryDTO dto) {
-		List<Voo> voos = this.model.availableFlights();
-		// TODO
-		return new AvailableFlightsDTO(200);
-		// TODO
+		AvailableFlightsQueryDTO q = (AvailableFlightsQueryDTO) dto;
+		try {
+			String user = checkToken(dto.getToken());
+			List<Voo> voos = this.model.availableFlights();
+			VoosDTO voosDTO = new VoosDTO();
+			for (Voo v : voos){
+				voosDTO.add(new VooDTO(v.getOrigem(), v.getDestino()));
+			}
+			return new AvailableFlightsDTO(200, voosDTO);
+		} catch (TokenInvalido e) {
+			return new UnitDTO(404);
+		}
 	}
 
 }
