@@ -1,5 +1,6 @@
 package g12.Server.FlightManager;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -7,16 +8,33 @@ import g12.Middleware.TokenInvalido;
 import g12.Server.FlightManager.BookingManager.*;
 import g12.Server.FlightManager.Exceptions.*;
 import g12.Server.FlightManager.UserManager.*;
+import g12.Server.Persistence.FlightData;
 
 public class FlightManagerFacade implements IFlightManager {
 
 	private IBookingManager booking;
 	private IUserManager users;
 
-	
 	public FlightManagerFacade() {
 		booking = new BookingManager();
 		users = new UserManager();
+	}
+
+	public static IFlightManager getState() {
+		try {
+			return FlightData.getState();
+		} catch (ClassNotFoundException | IOException e) {
+			return new FlightManagerFacade();
+		}
+	}
+
+	public boolean saveState() {
+		try {
+			FlightData.saveState(this);
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
 	/**
@@ -74,7 +92,8 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @throws UserIsNotClient
 	 */
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
-			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente, BookingDayJaExiste, DiaFechado, VooJaExiste {
+			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel,
+			BookingDayNaoExistente, BookingDayJaExiste, DiaFechado, VooJaExiste {
 		if (users.hasUser(user)) {
 			String bookId = booking.bookFlight(user, percurso, de, ate);
 			users.addReserva(user, bookId);
@@ -91,7 +110,8 @@ public class FlightManagerFacade implements IFlightManager {
 	 * @throws UserNaoExistente
 	 * @throws ReservaNaoExiste
 	 */
-	public Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente {
+	public Boolean cancelBook(String user, String id)
+			throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente {
 		if (this.users.isClient(user)) {
 			User u = users.getUser(user);
 			try {

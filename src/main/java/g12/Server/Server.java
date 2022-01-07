@@ -17,7 +17,7 @@ public class Server {
 	public static void main(String[] args) throws IOException {
 		ServerSocket ss = new ServerSocket(4444);
 		try (ss) {
-			IFlightManager model = new FlightManagerFacade();
+			IFlightManager model = FlightManagerFacade.getState();
 			while (true) {
 				Socket s = ss.accept();
 				ServerConnection tg = new ServerConnection(s);
