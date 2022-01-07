@@ -1,0 +1,162 @@
+\documentclass[a4paper,11pt]{scrreprt}
+    %% Used for changing geometry of the page
+    %% Cover page text cannot overlay cover sketching/style 
+    %% https://ctan.org/pkg/geometry?lang=en
+\usepackage{geometry}
+    %% Changes language of some packages protocols
+    %% e.g., when captioning images: Figure 1. -> Figura 1.
+    %% https://ctan.org/pkg/babel?lang=en
+\usepackage[portuguese]{babel}
+    %% Used for special fonts
+    %% Cannot be compiled with pdflatex
+    %% https://ctan.org/pkg/fontspec?lang=en
+\usepackage{fontspec}
+    %% Arial FONT
+    \setmainfont{Arial}
+\usepackage{subfiles}
+    %% More colors and color options
+    %% https://ctan.org/pkg/xcolor?lang=en
+    %% https://ctan.org/pkg/colortbl?lang=en
+\usepackage{xcolor,colortbl}
+    %% More tabular options, like dashed/dotted lines
+    %% https://ctan.org/pkg/arydshln?lang=en
+\usepackage{arydshln}
+    %% List of acronyms
+    %% https://ctan.org/pkg/nomencl?lang=en
+\usepackage[intoc]{nomencl}
+    %% Must be called to init nomencl environment  
+    \makenomenclature
+    %% More images options/settings
+    %% https://ctan.org/pkg/graphicx?lang=en
+\usepackage{graphics}
+    %% Defining subdirectories to image path enviornment
+    %% \graphicspath{{sub1}{sub2}...{subN}}
+    \graphicspath{{images}}
+    
+    %% used to handle cross-referencing commands in LaTeX to produce hypertext links in the document
+    %% https://ctan.org/pkg/hyperref?lang=en
+\usepackage{hyperref}
+    %% math environments
+    %% https://ctan.org/pkg/amsmath?lang=en
+
+    %% settings
+    \hypersetup{
+        colorlinks,
+        citecolor=black,
+        filecolor=black,
+        linkcolor=black,
+        urlcolor=black
+    }
+
+\usepackage{amsmath}
+    %% Defining backgrouns, used to make the cover
+    %% https://ctan.org/pkg/background?lang=en
+\usepackage[some]{background}
+    %% Used to make drawings or complex graphics
+    %% http://pgf.sourceforge.net/pgf_CVS.pdf
+\usepackage{tikz}
+    %% Tikz library to point operations ((x1,y1) + (x2,y2))
+    \usetikzlibrary{calc}
+\usepackage{lscape}
+%% Defining sfdefault font and default font for document
+\renewcommand{\familydefault}{\sfdefault}
+
+
+%% Costume made cover 
+%% From there you can use \makecover command to build the cover
+\include{cover}
+
+\graphicspath{ {./assets/} }
+
+% TODO
+% ABSTRACT - inclui objetivos e descrição MARCO
+% abordar motivo de criar passos e material
+% considerações finais
+
+\begin{document}
+
+\pagenumbering{gobble}
+
+% builds the cover
+\makecover
+
+%==========================================================================
+% BEGIN ABSTRACT PAGE
+%==========================================================================
+
+%% Abstract name: \Large font size, flushed left and paragraph skip before abstract content
+\renewenvironment{abstract}
+{\par\noindent\textbf{\Large\abstractname}\par\bigskip}
+{}
+
+\begin{flushleft}
+    \begin{abstract}
+        %=============
+        % How to build an abstract
+        % https://users.ece.cmu.edu/~koopman/essays/abstract.html
+        %=============
+        
+        \par \textbf{Área de Aplicação}: 
+        \par \textbf{Palavras-Chave}: 
+    \end{abstract}
+\end{flushleft}
+
+
+\pagebreak
+
+%==========================================================================
+% END ABSTRACT PAGE 
+%==========================================================================
+
+%==========================================================================
+% BEGIN INTRODUCTION
+%==========================================================================
+
+%% Starting page numbering here
+\pagenumbering{arabic}
+
+\chapter{Introdução}
+
+%==========================================================================
+% END INTRODUCTION
+%==========================================================================
+
+\section{Breve Descrição do Enunciado Proposto}
+
+\chapter{Considerações Finais}
+
+\section{Conclusões}
+
+\section{Trabalho Futuro}
+
+%==========================================================================
+% BEGIN LISTA DE SIGLAS E ACRÓNIMOS
+%==========================================================================
+
+%% Portuguese babel does not translate this environment
+\renewcommand{\nomname}{Lista de Siglas e Acrónimos}
+
+%% Text that can be shown before acronyms list
+\renewcommand{\nompreamble}{}
+
+%% acronyms
+%%\nomenclature[01]{\textbf{}}{}
+
+%% Show acronyms
+\printnomenclature
+
+%==========================================================================
+% END LISTA DE SIGLAS E ACRÓNIMOS
+%==========================================================================
+
+%==========================================================================
+% BEGIN ANEXOS
+%==========================================================================
+
+\addchap{Anexos}
+
+%==========================================================================
+% END ANEXOS
+%==========================================================================
+
+\end{document}
