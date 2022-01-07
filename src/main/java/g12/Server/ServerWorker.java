@@ -44,6 +44,7 @@ public class ServerWorker implements Runnable {
 
 	private final ServerConnection c;
 	private final IFlightManager model;
+	private final ThreadHandler th;
 	private Map<String, Function<QueryDTO, DTO>> mapping = Map.ofEntries(
 			entry(LoginQueryDTO.class.getSimpleName(), (x) -> this.loginHandler(x)),
 			entry(RegisterUserQueryDTO.class.getSimpleName(), (x) -> this.registerUser(x)),
@@ -62,9 +63,10 @@ public class ServerWorker implements Runnable {
 	 * @param c
 	 * @param model
 	 */
-	public ServerWorker(ServerConnection c, IFlightManager model) {
+	public ServerWorker(ServerConnection c, IFlightManager model, ThreadHandler th) {
 		this.model = model;
 		this.c = c;
+		this.th = th;
 	}
 
 	@Override
@@ -89,6 +91,7 @@ public class ServerWorker implements Runnable {
 			}
 		} catch (Exception e) {
 		}
+		this.th.c.signalAll();
 	}
 
 	public void requestHandler(Frame f) throws IOException {
@@ -192,7 +195,7 @@ public class ServerWorker implements Runnable {
 			String user = checkToken(dto.getToken());
 			List<Voo> voos = this.model.availableFlights();
 			VoosDTO voosDTO = new VoosDTO();
-			for (Voo v : voos){
+			for (Voo v : voos) {
 				voosDTO.add(new VooDTO(v.getOrigem(), v.getDestino()));
 			}
 			return new AvailableFlightsDTO(200, voosDTO);
