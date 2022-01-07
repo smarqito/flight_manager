@@ -82,7 +82,7 @@ public class BookingManager implements IBookingManager {
 			l.unlock();
 		}
 		Reserva r = new Reserva(user);
-		while (percurso.size() == 1 && de.compareTo(ate) < 0) {
+		while (percurso.size() <= 1 && de.compareTo(ate) < 0) {
 			l.lock();
 			BookingDay bd;
 			try {
