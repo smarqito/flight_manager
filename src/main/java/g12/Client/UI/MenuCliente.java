@@ -69,6 +69,7 @@ public class MenuCliente {
         try {
             AvailableFlightsQueryDTO q = new AvailableFlightsQueryDTO();
             AvailableFlightsDTO r = (AvailableFlightsDTO) this.c.queryHandler(q);
+            System.out.println(r.toString());
 
         } catch (IOException | BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
