@@ -10,8 +10,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 
 import g12.Client.Client;
 import g12.Middleware.BadRequest;
-import g12.Middleware.Params;
-import g12.Middleware.DTO.DTO;
 import g12.Middleware.DTO.QueryDTO.LoginQueryDTO;
 import g12.Middleware.DTO.QueryDTO.RegisterUserQueryDTO;
 import g12.Middleware.DTO.ResponseDTO.LoginDTO;
@@ -142,7 +140,9 @@ public class ClientUI {
             scin.next();
             System.out.println("Insira uma quantidade válida");
         }
-        return scin.nextInt();
+        int res = scin.nextInt();
+        scin.nextLine();
+        return res;
     }
 
     public static LocalDate getDate() {
