@@ -9,4 +9,9 @@ public class ServerConnection extends TaggedConnection {
         super(s);
     }
 
+    @Override
+    public String toString() {
+        return this.s.toString();
+    }
+
 }

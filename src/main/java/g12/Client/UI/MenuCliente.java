@@ -116,7 +116,6 @@ public class MenuCliente {
                     break;
             }
         } catch (IOException |
-
                 BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
