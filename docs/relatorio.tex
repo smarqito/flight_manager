@@ -61,6 +61,9 @@
 %% Defining sfdefault font and default font for document
 \renewcommand{\familydefault}{\sfdefault}
 
+\usepackage{float}
+
+\usepackage{minted}
 
 %% Costume made cover 
 %% From there you can use \makecover command to build the cover
@@ -105,7 +108,9 @@
         Assim, foi possível desenvolver a nossa aplicação \textbf{Flight Manager}, uma plataforma
         \textit{servidor-cliente} para lidar com os pedidos relativos à reserva de voos por parte de um cliente.
         \par \textbf{Área de Aplicação}: Sistemas Distribuídos
-        \par \textbf{Palavras-Chave}: 
+        \par \textbf{Palavras-Chave}: Sistemas Distribuídos, \textit{Threads}, \textit{Multithreaded}, 
+                                      \textit{MiddleWare}, Servidor, Cliente, Serialização, \textit{DTO},
+                                      \textit{Sockets}, TCP, \textit{Tagged Connection}
     \end{abstract}
 \end{flushleft}
 
@@ -127,16 +132,97 @@
 O presente relatório foi escrito no âmbito da Unidade Curricular de Sistemas Distribuídos (SD), sendo o
 seu principal objetivo apresentar a solução desenvolvida para responder às necessidades advindas de uma 
 plataforma \textit{servidor-cliente} para reserva de voos.
-É concecionado com a diretiva de facilitar a compreensão e entender o planemamento estruturado que levou
-à criação do \textbf{Flight Manager}.
+É concecionado com a diretiva de facilitar a compreensão dos métodos usados e o planemamento
+estruturado que levou à criação do \textbf{Flight Manager}.
+
+Com a entrega deste projeto, é o objetivo do grupo absorver os conceitos lecionados durante o semestre,
+nomeadamente,
+\begin{itemize}
+    \item Exclusão Mútua
+    \item Programação com \textit{Sockets}
+    \item Programação com várias \textit{Threads} (\textit{MultiThread})
+    \item Serialização de Objetos
+\end{itemize}
+
+construindo, no final, um sistema que corresponda às funcionalidades básicas propostas pela equipa docente,
+de um modo organizado, aproveitando o encapsulamento e o benefício da programação orientada a objetos, da 
+linguagem \textit{Java}.
 
 %==========================================================================
 % END INTRODUCTION
 %==========================================================================
 
-\chapter{Breve Descrição do Enunciado Proposto}
+\chapter{Breve Descrição do Problema}
 
-\section{Estratégia Utilizada}
+Tal como referido, o enunciado propõe a conceção e implementação de uma plataforma para gestão de reservas 
+de voos, apresentando várias vertentes que o sistema deve responder.
+
+Os clientes, a quem a plataforma é destinada, podem estabelecer as viagens que desejam, sendo estas um 
+conjunto de vários voos. O cliente, no caso desta ser a sua vontade, pode cancelar as suas viagens.
+
+Considerando, no sentido de facilitar a implementação, que os mesmos voos repetem-se todos os dias, é possível
+um cliente efetuar uma viagem: A \rightarrow C, caso exista A \rightarrow B e B \rightarrow C.
+
+Adicionalmente, deve ser concecionado uma lista de funcionalidades para os administradores da plataforma, que 
+irão gerir a informação interna do \textbf{Flight Manager}.
+
+O desenvolvimento é marcado por 3 equívocos principais:
+\begin{itemize}
+    \item[Cliente] Interface com o Utilizador para usar as funcionalidades
+    \item[Servidor] Responsável pelo \textit{handling} dos \textit{requests} do cliente
+    \item[Comunicação] Entre o cliente e o servidor 
+\end{itemize}
+
+Em primeiro lugar, encontra-se o \textbf{cliente}, que inclui
+
+(i) a apresentação dos pedidos que podem ser efetuados pelos utilizadores, sejam eles
+um \textbf{administrador} ou um \textbf{cliente comum}.
+
+(ii) o envio dos pedidos ao servidor e o tratamento das respostas.
+
+Em segundo, o \textbf{servidor}, que engloba
+
+(i) o \textit{handling} dos pedidos recebidos dos utilizadores da aplicação.
+
+(ii) a conservação das informações internas relativas à plataforma, voos e utilizadores.
+
+(iii) um \textit{logger} para atualizar sobre o estado da plataforma, no seu decorrer.
+
+Por fim, a \textbf{Comunicação}, agregando
+
+(i) as mensagens construídas para estabelecer a interação entre os utilizadores e o servidor.
+
+\section{Estratégia Utilizada} \label{strat_esc}
+
+Devido ao contexto em que foi realizado, o sistema partiu dos conceitos lecionados no percurso semestral, desde 
+a implementação de um \textit{servidor-cliente}, com o uso de \textit{sockets} \textbf{TCP}, o uso de exclusão 
+mútua para permitir este sistema \textit{multithreaded}, até à serialização de objetos, para o envio das mensagens 
+protocolares definidas.
+
+De modo a ter um desenvolvimento mais estruturado, aplicando recursos disponibilizados através de outras 
+Unidades Curriculares, foram previamente construídos diagramas para os principais elementos do sistema.
+
+Primeiramente, foi necessária uma visão clara dos atores principais que vão interagir com o sistema, sendo construído
+para tal um \textbf{Diagrama de Use Cases}, para demonstrar a dinâmica (Ver \ref{dig:use_cases}).
+
+\begin{figure}[H] \label{dig:use_cases}
+    \centering
+    \includegraphics[width=0.5\textwidth]{diagrams/Server Use Case Diagram.jpg}
+    \caption{Diagrama de Use Cases do \textit{Flight Manager}}
+\end{figure}
+
+A partir das funcionalidades mencionadas no enunciado do trabalho proposto, foram distribuídas as opções para os
+utilizadores da aplicação, seguindo a conceção do sistema.
+
+Esta, divide-se em três grandes componentes:
+\begin{itemize}
+    \item[Cliente]{Responsável pela apresentação e envio dos pedidos disponíveis do Cliente.}
+    \item[Servidor]{Responsável pela resposta por parte do Servidor.} 
+    \item[Middleware]{Construtor das \textit{Querys} e \textit{Responses}, bem como gere o suporte para a conexão.} 
+\end{itemize}
+
+Considerou-se mais intuitivo previamente apresentar o modo como a conexão do Servidor/Cliente é geridas e o tipo
+de mensagens criadas, sendo a primeira grande componente da aplicação a ser apresentada o: \textit{Middleware}.
 
 \subsection{Middleware}
 \subfile{middleware.tex}
@@ -149,10 +235,47 @@ plataforma \textit{servidor-cliente} para reserva de voos.
 
 \section{Funcionalidades Adicionais}
 
+No seguimento da realização das funcionalidade obrigatórias pré-definidas pela equipa docente, 
+foi considerada a adição de aspetos adicionais, de modo a enriquecer a resposta previamente 
+construída.
+
 \chapter{Considerações Finais}
 \section{Conclusões}
 
+Ao longo do desenvolvimento do projeto, e com o auxilio da equipa docente para qualquer questão 
+relativa à matéria lecionada e à conceção do trabalho, o grupo foi munido com todos os conceitos
+e materiais necessários para o bom desenvolvimento do sistema, \textit{Flight Manager}.
+
+A partir de conceitos de outras unidades curriculares, o grupo foi possibilitado a resolver uma 
+solução outrora complexa, a partir de um estruturamento planificado e modelado, usando para tal 
+o sistema de modelação \textit{Visual Paradigm}.
+Este permitiu, muito mais facilmente, fragmentar o que era necessário resolver para colocar o 
+sistema a correr, poupando muito tempo que podia ser perdido, ao construir a aplicação "à mediada
+que fazia".
+
+O grupo encontra-se orgulhoso por poder implementar um sistema que não só responde às funcionalidades 
+básicas estabelcidades pela equipa docente, com uma plataforma bem construída do ponto de vista
+de encapsulamento e organização dos vários constituintes.
+
+Escusado é dizer que muniu todos os participantes com experiência na realização de projetos que sigam 
+os conceitos de \textbf{Sistemas Operativos}, nomeadamente a exclusão mútua, a programação com \textit{sockets} e
+com várias \textit{Threads}.
+
 \section{Trabalho Futuro}
+
+Apesar de todo o processo de desenvolvimento do sistema \textit{Flight Manager} ter coincidido com as espectativas
+colocadas pelo grupo, e, até permitido adicionar funcionalidades numa tentativa de obter um melhor aproveitamento,
+existem alguns pontos que poderiam ser abordados numa iteração seguinte do \textbf{Flight Manager}.
+
+Como qualquer sistema que visa a interação com utilizadores sem conhecimentos dentro da área de informática, o 
+manuseamento de um terminal para utilizar a plataforma pode tornar-se incómodo.
+Dado a aplicação querer satisfazer as necessidades de utilizadores comuns, seria de extrema importância a conceção
+de uma interface com o utilizador intuitiva e simples de usar.
+Assim, um dos problemas seria a criação de uma \textit{framework} conceptual para o \textbf{Flight Manager}.
+
+Outra equívoco seria a adição de mais funcionalidades. 
+O aperfeiçoamento da aplicação, de modo a chegar a um estado competitivo para o mercado atual, passaria pela
+implementação de várias e diferentes funcionalidades que o distingue dos restantes produtos análogos.
 
 %==========================================================================
 % BEGIN LISTA DE SIGLAS E ACRÓNIMOS
@@ -165,7 +288,13 @@ plataforma \textit{servidor-cliente} para reserva de voos.
 \renewcommand{\nompreamble}{}
 
 %% acronyms
-%%\nomenclature[01]{\textbf{}}{}
+\nomenclature[01]{\textbf{SD}}{Sistemas Distribuídos}
+\nomenclature[02]{\textbf{DTO}}{\textit{Data-Transfer Object}}
+\nomenclature[03]{\textbf{UC}}{Unidade Curricular}
+\nomenclature[04]{\textbf{plataforma}}{Sistema de gestão de reservas de voos}
+\nomenclature[05]{\textbf{sistema}}{Sistema de gestão de reservas de voos}
+\nomenclature[06]{\textbf{aplicação}}{Sistema de gestão de reservas de voos}
+\nomenclature[06]{\textbf{programa}}{Sistema de gestão de reservas de voos}
 
 %% Show acronyms
 \printnomenclature
