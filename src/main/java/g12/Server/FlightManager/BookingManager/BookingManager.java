@@ -13,12 +13,15 @@ public class BookingManager implements IBookingManager {
 	private Map<String, Reserva> reservas;
 	private Set<BookingDay> voos;
 	private List<Voo> voosDiarios;
+	private Map<String, List<String>> grafo;
 	private Lock l = new ReentrantLock();
+	private Lock g = new ReentrantLock();
 
 	public BookingManager() {
 		reservas = new HashMap<>();
 		voos = new TreeSet<>();
 		voosDiarios = new ArrayList<>();
+		grafo = new HashMap<>();
 	}
 
 	@Override
@@ -27,6 +30,22 @@ public class BookingManager implements IBookingManager {
 		try {
 			Voo v = new Voo(orig, dest, cap);
 			this.voosDiarios.add(v);
+			g.lock();
+			try {
+				if (grafo.containsKey(v.getOrigem())){
+					List<String> arestas = grafo.get(v.getOrigem());
+					arestas.add(v.getDestino());
+					grafo.put(v.getOrigem(), arestas);
+				} else {
+					List<String> arestas = new ArrayList<>();
+					arestas.add(v.getDestino());
+					grafo.put(v.getOrigem(), arestas);
+
+				}
+			}finally {
+				g.unlock();
+			}
+
 			Set<BookingDay> days = this.voos.stream()
 					.filter(x -> x.getDate().compareTo(LocalDate.now()) >= 0 && x.isOpen())
 					.collect(Collectors.toSet());
@@ -198,13 +217,60 @@ public class BookingManager implements IBookingManager {
 
 	public List<Voo> getAvailableFlights() {
 		this.l.lock();
-		List<Voo> voos;
 		try {
-			voos = this.voosDiarios;
+			return voosDiarios.stream().map(Voo::clone).collect(Collectors.toList());
 		} finally {
 			this.l.unlock();
 		}
-		return voos.stream().map(Voo::clone).collect(Collectors.toList());
+	}
+
+	public List<List<String>> getFlightList(String origem, String destino){
+		Queue<List<String> > queue = new LinkedList<>();
+		List<List<String>> voos = new ArrayList<>();
+		this.g.lock();
+		try {
+			// Path vector to store the current path
+			List<String> path = new ArrayList<>();
+			path.add(origem);
+			queue.offer(path);
+			//minimizar o custo (Set)
+			while (!queue.isEmpty()) {
+				path = queue.poll();
+				String last = path.get(path.size() - 1);
+
+				// If last vertex is the desired destination
+				// then print the path
+				if (last.equals(destino) && path.size() <= 3) {
+					voos.add(path);
+				}
+
+				// Traverse to all the nodes connected to
+				// current vertex and push new path to queue
+				List<String> lastNode = grafo.get(last);
+				if (lastNode != null) {
+					for (int i = 0; i < lastNode.size(); i++) {
+						if (isNotVisited(lastNode.get(i), path)) {
+							List<String> newpath = new ArrayList<>(path);
+							newpath.add(lastNode.get(i));
+							queue.offer(newpath);
+						}
+					}
+				}
+			}
+		}finally {
+			this.g.unlock();
+		}
+		return voos;
+	}
+
+	private boolean isNotVisited(String x, List<String> path)
+	{
+		int size = path.size();
+		for(int i = 0; i < size; i++)
+			if (path.get(i).equals(x))
+				return false;
+
+		return true;
 	}
 
 	public BookingDay getBookingDay(LocalDate date) throws BookingDayNaoExistente {

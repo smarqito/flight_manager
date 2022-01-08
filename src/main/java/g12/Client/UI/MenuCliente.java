@@ -5,13 +5,12 @@ import java.time.LocalDate;
 
 import g12.Client.Client;
 import g12.Middleware.BadRequest;
+import g12.Middleware.DTO.QueryDTO.GetFlightListQueryDTO;
+import g12.Middleware.DTO.ResponseDTO.*;
 import g12.Middleware.Params;
 import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
 import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
 import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
-import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
-import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
-import g12.Middleware.DTO.ResponseDTO.UnitDTO;
 
 public class MenuCliente {
 
@@ -51,12 +50,14 @@ public class MenuCliente {
 
         Menu menu = new Menu(new String[] {
                 "Ver voos disponíveis",
+                "Ver percursos possíveis (limitado a 2 escalas)",
                 "Fazer reserva"
         });
 
         // Registar handlers
         menu.setHandler(1, this::menuVerVoosDisp);
-        menu.setHandler(2, this::menuReserva);
+        menu.setHandler(2, this::menuPercursosPossiveis);
+        menu.setHandler(3, this::menuReserva);
 
         menu.run();
     }
@@ -145,5 +146,30 @@ public class MenuCliente {
         } catch (IOException | BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
+    }
+
+    /**
+     * Método que obter os percursos possíveis entre uma origem e destino (limitado a 2 escalas)
+     */
+    private void menuPercursosPossiveis() {
+        try {
+            System.out.println("Insira o seu percurso desejado(separado por linha)");
+            String origem = ClientUI.scin.nextLine();
+            String dest = ClientUI.scin.nextLine();
+            GetFlightListQueryDTO q = new GetFlightListQueryDTO(origem, dest);
+            ResponseDTO r = (ResponseDTO) this.c.queryHandler(q);
+            switch (r.getRespCode()){
+                case 200:
+                    GetFlightListDTO resp = (GetFlightListDTO) r;
+                    System.out.println(resp.toString());
+                    break;
+                default:
+                    UnitDTO u = (UnitDTO) r;
+                    System.out.println("erro");
+            }
+        } catch (BadRequest | IOException e) {
+            System.out.println("Houve problemas de comunicação. Tente novamente.");
+        }
+
     }
 }
