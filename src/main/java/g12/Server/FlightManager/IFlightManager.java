@@ -90,6 +90,13 @@ public interface IFlightManager {
 	List<Voo> availableFlights();
 
 	/**
+	 *  Obtem lista com todos os percursos possíveis para viajar entre uma origem e um destino, limitados a duas escalas
+	 *
+	 * @return Lista de todos os percursos possíveis
+	 */
+	List<List<String>> getFlightList(String origem, String destino);
+
+	/**
 	 * Verifica se um token é válido (algoritmo + claim)
 	 * 
 	 * @param token Token a ser validado

@@ -34,6 +34,17 @@ public interface IBookingManager {
 	 */
 	void removeBooking(String bookId) throws ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente;
 
+	/**
+	 *
+	 * @return  List<Voo>
+	 */
 	List<Voo> getAvailableFlights();
+
+	/**
+	 * @param origem
+	 * @param destino
+	 * @return  List<List<String>>
+	 */
+	List<List<String>> getFlightList(String origem, String destino);
 
 }
