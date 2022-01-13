@@ -10,7 +10,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TaggedConnection implements AutoCloseable {
-	private Socket s;
+	protected Socket s;
 	protected DataInputStream in;
 	protected DataOutputStream out;
 	protected Lock sendLock = new ReentrantLock();

@@ -29,11 +29,13 @@ import g12.Server.FlightManager.Exceptions.UserJaExisteException;
 import g12.Server.FlightManager.Exceptions.UserNaoExistente;
 import g12.Server.FlightManager.Exceptions.VooJaExiste;
 import g12.Server.FlightManager.Exceptions.VooNaoExistente;
+import g12.Server.Logger.Logger;
 
 public class ServerWorker implements Runnable {
 
 	private final ServerConnection c;
 	private final IFlightManager model;
+	private final ThreadHandler th;
 	private Map<String, Function<QueryDTO, DTO>> mapping = Map.ofEntries(
 			entry(LoginQueryDTO.class.getSimpleName(), (x) -> this.loginHandler(x)),
 			entry(RegisterUserQueryDTO.class.getSimpleName(), (x) -> this.registerUser(x)),
@@ -53,14 +55,16 @@ public class ServerWorker implements Runnable {
 	 * @param c
 	 * @param model
 	 */
-	public ServerWorker(ServerConnection c, IFlightManager model) {
+	public ServerWorker(ServerConnection c, IFlightManager model, ThreadHandler th) {
 		this.model = model;
 		this.c = c;
+		this.th = th;
 	}
 
 	@Override
 	public void run() {
 		int tag = 0;
+		Logger.WriteLog(this.c.toString() + " SYN\n");
 		try {
 			try (c) {
 				for (;;) {
@@ -68,7 +72,8 @@ public class ServerWorker implements Runnable {
 						try {
 							Frame frame = this.c.receive();
 							tag = frame.tag;
-							System.out.println(frame.toString());
+							System.out.println(this.c.toString() + "\n" + frame.getDto().toString());
+							Logger.WriteLog(this.c.toString() + "\n" + frame.getDto().toString());
 							this.requestHandler(frame);
 						} catch (IOException ignored) {
 							this.c.send(new Frame(tag, new RequestExceptionDTO(ignored.getMessage())));
@@ -79,6 +84,13 @@ public class ServerWorker implements Runnable {
 				}
 			}
 		} catch (Exception e) {
+		}
+		this.th.l.lock();
+		try {
+			Logger.WriteLog(this.c.toString() + " FYN\n");
+			this.th.c.signalAll();
+		} finally {
+			this.th.l.unlock();
 		}
 	}
 
@@ -183,7 +195,7 @@ public class ServerWorker implements Runnable {
 			String user = checkToken(dto.getToken());
 			List<Voo> voos = this.model.availableFlights();
 			VoosDTO voosDTO = new VoosDTO();
-			for (Voo v : voos){
+			for (Voo v : voos) {
 				voosDTO.add(new VooDTO(v.getOrigem(), v.getDestino()));
 			}
 			return new AvailableFlightsDTO(200, voosDTO);

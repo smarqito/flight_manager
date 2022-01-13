@@ -88,7 +88,7 @@ public class BookingManager implements IBookingManager {
 
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente,
 			ReservaIndisponivel, PercusoNaoDisponivel, BookingDayJaExiste, DiaFechado, VooJaExiste {
-		if (de.compareTo(LocalDate.now()) < 0 || de.compareTo(ate) < 0){
+		if (de.compareTo(LocalDate.now()) < 0 || de.compareTo(ate) > 0){
 			throw new ReservaIndisponivel("Datas erradas");
 		}
 		l.lock();

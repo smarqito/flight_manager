@@ -11,6 +11,11 @@ import g12.Middleware.Params;
 import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
 import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
 import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
+import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
+import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
+import g12.Middleware.DTO.ResponseDTO.ResponseDTO;
+import g12.Middleware.DTO.ResponseDTO.UnitDTO;
+
 
 public class MenuCliente {
 
@@ -85,10 +90,10 @@ public class MenuCliente {
         System.out.println("Insira o seu percurso desejado(separado com , )");
         String perc = ClientUI.scin.nextLine();
 
-        System.out.println("Insira a data mínima! [dd-MM-YYYY]");
+        System.out.println("Insira a data mínima! [YYYY-MM-dd]");
         LocalDate min = ClientUI.getDate();
 
-        System.out.println("Insira a data máxima! [dd-MM-YYYY]");
+        System.out.println("Insira a data máxima! [YYYY-MM-dd]");
         LocalDate max = ClientUI.getDate();
         try {
             String[] s = perc.split(",");
@@ -96,11 +101,11 @@ public class MenuCliente {
             params.addAll(s);
 
             BookFlightQueryDTO q = new BookFlightQueryDTO(params, min, max);
-            BookFlightDTO r = (BookFlightDTO) this.c.queryHandler(q);
-
+            ResponseDTO r = (ResponseDTO) this.c.queryHandler(q);
             switch (r.getRespCode()) {
                 case 200:
-                    System.out.println("Reserva efetuada com o ID: " + r.getBookId());
+                    BookFlightDTO resp = (BookFlightDTO) r;
+                    System.out.println("Reserva efetuada com o ID: " + resp.getBookId());
                     break;
                 case 401:
                     System.out.println("Nao tem permissoes.");
@@ -115,7 +120,8 @@ public class MenuCliente {
                     System.out.println("Recusado.Verifique os parametros inseridos!");
                     break;
             }
-        } catch (IOException | BadRequest e) {
+        } catch (IOException |
+                BadRequest e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }

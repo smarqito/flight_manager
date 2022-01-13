@@ -64,7 +64,8 @@ public interface IFlightManager {
 	 * @throws UserIsNotClient  Caso o utilizador nao seja cliente (pode ser admin)
 	 */
 	String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate)
-			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel, BookingDayNaoExistente, BookingDayJaExiste, DiaFechado, VooJaExiste;
+			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel,
+			BookingDayNaoExistente, BookingDayJaExiste, DiaFechado, VooJaExiste;
 
 	/**
 	 * Cancela uma reserva;
@@ -80,7 +81,8 @@ public interface IFlightManager {
 	 * @throws UserNaoExistente Caso o user nao exista
 	 * @throws ReservaNaoExiste
 	 */
-	Boolean cancelBook(String user, String id) throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente;
+	Boolean cancelBook(String user, String id)
+			throws UserNaoExistente, UserIsNotClient, ReservaNaoExiste, VooNaoExistente, BookingDayNaoExistente;
 
 	/**
 	 * Calcula os voos disponiveis para o dia
@@ -105,4 +107,11 @@ public interface IFlightManager {
 	 *                       user nao exista!
 	 */
 	String verifyToken(String token) throws TokenInvalido;
+
+	/**
+	 * Guarda o manager num ficheiro de objetos
+	 * 
+	 * @return True se foi possivel
+	 */
+	boolean saveState();
 }
