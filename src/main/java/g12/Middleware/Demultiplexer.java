@@ -15,6 +15,7 @@ public class Demultiplexer extends ClientConnection {
     private Map<Integer, Entry> mapa = new HashMap<>();
     Lock mLock = new ReentrantLock();
     private IOException exc = null;
+    private Thread receiver;
 
     public Demultiplexer(Socket s) throws IOException {
         super(s);
@@ -41,7 +42,7 @@ public class Demultiplexer extends ClientConnection {
     }
 
     public void start() {
-        new Thread(() -> {
+        this.receiver = new Thread(() -> {
             try {
                 for (;;) {
                     Frame f = super.receive();
@@ -64,6 +65,7 @@ public class Demultiplexer extends ClientConnection {
                 }
             }
         });
+        this.receiver.start();
     }
 
     public DTO receive(int tag) throws IOException {
@@ -85,12 +87,18 @@ public class Demultiplexer extends ClientConnection {
                     throw this.exc;
                 }
                 try {
-                    e.cond.wait();
+                    e.cond.await();
                 } catch (InterruptedException e1) {
                 }
             }
         } finally {
             mLock.unlock();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        this.receiver.interrupt(); // fecha thread que esta a receber info da socket
     }
 }
