@@ -10,17 +10,8 @@ import static java.util.Map.entry;
 
 import g12.Middleware.DTO.DTO;
 import g12.Middleware.DTO.ExceptionDTO.RequestExceptionDTO;
-import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
-import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
-import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
-import g12.Middleware.DTO.QueryDTO.CloseDayQueryDTO;
-import g12.Middleware.DTO.QueryDTO.LoginQueryDTO;
-import g12.Middleware.DTO.QueryDTO.RegisterFlightQueryDTO;
-import g12.Middleware.DTO.QueryDTO.RegisterUserQueryDTO;
-import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
-import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
-import g12.Middleware.DTO.ResponseDTO.LoginDTO;
-import g12.Middleware.DTO.ResponseDTO.UnitDTO;
+import g12.Middleware.DTO.QueryDTO.*;
+import g12.Middleware.DTO.ResponseDTO.*;
 
 public class Frame {
     static Map<String, Class<? extends DTO>> mapping = Map.ofEntries(
@@ -35,7 +26,9 @@ public class Frame {
             entry(BookFlightQueryDTO.class.getSimpleName(), BookFlightQueryDTO.class),
             entry(CancelBookQueryDTO.class.getSimpleName(), CancelBookQueryDTO.class),
             entry(AvailableFlightsQueryDTO.class.getSimpleName(), AvailableFlightsQueryDTO.class),
-            entry(RequestExceptionDTO.class.getSimpleName(), RequestExceptionDTO.class));
+            entry(RequestExceptionDTO.class.getSimpleName(), RequestExceptionDTO.class),
+            entry(GetFlightListDTO.class.getSimpleName(), GetFlightListDTO.class),
+            entry(GetFlightListQueryDTO.class.getSimpleName(), GetFlightListQueryDTO.class));
 
     static Class<? extends DTO> getMapping(String m) {
         return mapping.get(m);
