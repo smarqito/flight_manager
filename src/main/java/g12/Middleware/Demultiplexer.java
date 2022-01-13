@@ -3,17 +3,18 @@ package g12.Middleware;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import g12.Middleware.DTO.ResponseDTO.ResponseDTO;
+import g12.Middleware.DTO.DTO;
 
 public class Demultiplexer extends ClientConnection {
-    private Map<Integer, Entry> mapa;
+    private Map<Integer, Entry> mapa = new HashMap<>();
     Lock mLock = new ReentrantLock();
-    private IOException e = null;
+    private IOException exc = null;
 
     public Demultiplexer(Socket s) throws IOException {
         super(s);
@@ -21,7 +22,7 @@ public class Demultiplexer extends ClientConnection {
 
     private class Entry {
         final Condition cond = mLock.newCondition();
-        final ArrayDeque<ResponseDTO> queue = new ArrayDeque<>();
+        final ArrayDeque<DTO> queue = new ArrayDeque<>();
         int waiters = 0;
     }
 
@@ -47,7 +48,7 @@ public class Demultiplexer extends ClientConnection {
                     mLock.lock();
                     try {
                         Entry e = get(f.tag);
-                        e.queue.add((ResponseDTO) f.getDto());
+                        e.queue.add(f.getDto());
                         e.cond.signal();
                     } finally {
                         mLock.unlock();
@@ -56,7 +57,7 @@ public class Demultiplexer extends ClientConnection {
             } catch (IOException e) {
                 mLock.lock();
                 try {
-                    this.e = e;
+                    this.exc = e;
                     mapa.values().stream().forEach(x -> x.cond.signalAll());
                 } finally {
                     mLock.unlock();
@@ -65,7 +66,7 @@ public class Demultiplexer extends ClientConnection {
         });
     }
 
-    public ResponseDTO receive(int tag) throws IOException, InterruptedException {
+    public DTO receive(int tag) throws IOException {
         mLock.lock();
         try {
             Entry e = get(tag);
@@ -73,17 +74,20 @@ public class Demultiplexer extends ClientConnection {
 
             for (;;) {
                 if (!e.queue.isEmpty()) {
-                    ResponseDTO res = e.queue.poll();
+                    DTO res = e.queue.poll();
                     e.waiters--;
                     if (e.queue.isEmpty() && e.waiters == 0) {
                         mapa.remove(tag);
                     }
                     return res;
                 }
-                if (this.e != null) { // por exemplo socket ser fechada
-                    throw this.e;
+                if (this.exc != null) { // por exemplo socket ser fechada
+                    throw this.exc;
                 }
-                e.cond.wait();
+                try {
+                    e.cond.wait();
+                } catch (InterruptedException e1) {
+                }
             }
         } finally {
             mLock.unlock();

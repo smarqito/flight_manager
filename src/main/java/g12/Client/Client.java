@@ -2,10 +2,12 @@ package g12.Client;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import g12.Client.UI.ClientUI;
 import g12.Middleware.BadRequest;
-import g12.Middleware.ClientConnection;
+import g12.Middleware.Demultiplexer;
 import g12.Middleware.Frame;
 import g12.Middleware.DTO.DTO;
 import g12.Middleware.DTO.ExceptionDTO.RequestExceptionDTO;
@@ -13,10 +15,22 @@ import g12.Middleware.DTO.ResponseDTO.LoginDTO;
 
 public class Client {
 
-	private int tag;
-	private ClientConnection c;
+	private int tag = 0;
+	private Lock l = new ReentrantLock();
 
-	public Client(ClientConnection c) {
+	private Demultiplexer c;
+
+	
+	public int getTag() {
+		l.lock();
+		try {
+			return tag++;
+		} finally {
+			l.unlock();
+		}
+	}
+
+	public Client(Demultiplexer c) {
 		this.c = c;
 	}
 
@@ -27,7 +41,7 @@ public class Client {
 	public static void main(String[] args) {
 		try {
 			Socket s = new Socket("localhost", 4444);
-			new Client(new ClientConnection(s)).clientRunnable();
+			new Client(new Demultiplexer(s)).clientRunnable();
 
 		} catch (IOException e) {
 			System.out.println("Nao foi possivel estabelecer ligacao!");
@@ -36,9 +50,10 @@ public class Client {
 	}
 
 	public DTO queryHandler(DTO dto) throws IOException, BadRequest {
-		Frame f = new Frame(tag++, dto);
+		int tag = this.getTag();
+		Frame f = new Frame(tag, dto);
 		c.send(f);
-		DTO respDTO = c.receive().getDto();
+		DTO respDTO = c.receive(tag);
 		if (respDTO.getClass().getSimpleName().equals(RequestExceptionDTO.class.getSimpleName())) {
 			RequestExceptionDTO rq = (RequestExceptionDTO) respDTO;
 			throw new BadRequest(rq.getMessage());
@@ -56,6 +71,7 @@ public class Client {
 
 	public void clientRunnable() {
 		ClientUI cUi = new ClientUI(this);
+		this.c.start(); // inicia receive socket
 		cUi.run();
 	}
 
