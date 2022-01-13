@@ -95,8 +95,16 @@ public class FlightManagerFacade implements IFlightManager {
 			throws UserIsNotClient, UserNaoExistente, VooNaoExistente, ReservaIndisponivel, PercusoNaoDisponivel,
 			BookingDayNaoExistente, BookingDayJaExiste, DiaFechado, VooJaExiste {
 		if (users.hasUser(user)) {
-			String bookId = booking.bookFlight(user, percurso, de, ate);
-			users.addReserva(user, bookId);
+			User u = users.getUser(user);
+			u.lock.lock();
+			String bookId;
+			try {
+				bookId = booking.bookFlight(user, percurso, de, ate);
+				users.addReserva(user, bookId);
+			} finally {
+				u.lock.unlock();
+			}
+
 			return bookId;
 		}
 		throw new UserNaoExistente(user);
@@ -131,6 +139,10 @@ public class FlightManagerFacade implements IFlightManager {
 
 	public List<Voo> availableFlights() {
 		return this.booking.getAvailableFlights();
+	}
+
+	public List<List<String>> getFlightList(String origem, String destino){
+		return this.booking.getFlightList(origem, destino);
 	}
 
 	@Override

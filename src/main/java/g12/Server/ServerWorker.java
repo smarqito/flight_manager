@@ -10,18 +10,8 @@ import static java.util.Map.entry;
 import g12.Middleware.*;
 import g12.Middleware.DTO.DTO;
 import g12.Middleware.DTO.ExceptionDTO.RequestExceptionDTO;
-import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
-import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
-import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
-import g12.Middleware.DTO.QueryDTO.CloseDayQueryDTO;
-import g12.Middleware.DTO.QueryDTO.LoginQueryDTO;
-import g12.Middleware.DTO.QueryDTO.QueryDTO;
-import g12.Middleware.DTO.QueryDTO.RegisterFlightQueryDTO;
-import g12.Middleware.DTO.QueryDTO.RegisterUserQueryDTO;
-import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
-import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
-import g12.Middleware.DTO.ResponseDTO.LoginDTO;
-import g12.Middleware.DTO.ResponseDTO.UnitDTO;
+import g12.Middleware.DTO.QueryDTO.*;
+import g12.Middleware.DTO.ResponseDTO.*;
 import g12.Middleware.DTO.VooDTO;
 import g12.Middleware.DTO.VoosDTO;
 import g12.Server.FlightManager.*;
@@ -53,7 +43,8 @@ public class ServerWorker implements Runnable {
 			entry(CloseDayQueryDTO.class.getSimpleName(), (x) -> this.closeDay(x)),
 			entry(BookFlightQueryDTO.class.getSimpleName(), (x) -> this.bookFlight(x)),
 			entry(CancelBookQueryDTO.class.getSimpleName(), (x) -> this.cancelBook(x)),
-			entry(AvailableFlightsQueryDTO.class.getSimpleName(), (x) -> this.availableFlights(x)));
+			entry(AvailableFlightsQueryDTO.class.getSimpleName(), (x) -> this.availableFlights(x)),
+			entry(GetFlightListQueryDTO.class.getSimpleName(), (x) -> this.getFligthList(x)));
 
 	private Function<QueryDTO, DTO> getMapping(String m) {
 		return mapping.get(m);
@@ -208,6 +199,18 @@ public class ServerWorker implements Runnable {
 				voosDTO.add(new VooDTO(v.getOrigem(), v.getDestino()));
 			}
 			return new AvailableFlightsDTO(200, voosDTO);
+		} catch (TokenInvalido e) {
+			return new UnitDTO(404);
+		}
+	}
+
+	public DTO getFligthList(QueryDTO dto){
+		GetFlightListQueryDTO q = (GetFlightListQueryDTO) dto;
+		try {
+			String user = checkToken(dto.getToken());
+			List<List<String>> voos = this.model.getFlightList(q.getOrigem(), q.getDest());
+			return new GetFlightListDTO(200, voos);
+
 		} catch (TokenInvalido e) {
 			return new UnitDTO(404);
 		}
