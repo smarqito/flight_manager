@@ -29,8 +29,8 @@ public class GetFlightListDTO extends ResponseDTO{
         for (List<String> lista : voos){
             out.writeInt(lista.size());
             for (String voo : lista){
-                Integer v;
-                if ((v = mapa.get(voo)) == null){
+                Integer v = mapa.get(voo);
+                if (v == null){
                     mapa.put(voo, count++);
                     out.writeInt(-1);
                     out.writeUTF(voo);
@@ -51,8 +51,8 @@ public class GetFlightListDTO extends ResponseDTO{
             int size = in.readInt();
             List<String> voos2 = new ArrayList<>(size);
             for (int j = 0; j < size; j++){
-                int n;
-                if ((n = in.readInt()) == -1){
+                int n = in.readInt();
+                if (n == -1){
                     String v = in.readUTF();
                     mapa.put(count++, v);
                     voos2.add(v);
