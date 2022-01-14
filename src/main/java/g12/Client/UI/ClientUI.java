@@ -63,7 +63,7 @@ public class ClientUI {
         menu.setHandler(2, this::menuRegister);
 
         // Executar o menu
-        menu.run();
+        menu.runOnce();
     }
 
     /**
@@ -71,36 +71,34 @@ public class ClientUI {
      * 
      * Permite autenticar-se no sistema, caso seja um user
      * registado no sistema
+     * Se falhar na autenticação, volta ao menu inicial
      */
     private void menuLogin() {
         LoginQueryDTO q = new LoginQueryDTO();
 
-        boolean login = false;
-        while (!login) {
-            System.out.println("Insira o seu nome de Utilizador: ");
-            String id = scin.nextLine();
-            q.setUser(id);
-            System.out.println("Insira a sua palavra-passe: ");
-            String pass = scin.nextLine();
-            q.setPass(pass);
-            try {
-                LoginDTO r = this.c.loginHandler(q);
-                if (r.getRespCode().equals(200)) {
-                    login = true;
+        System.out.println("Insira o seu nome de Utilizador: ");
+        String id = scin.nextLine();
+        q.setUser(id);
+        System.out.println("Insira a sua palavra-passe: ");
+        String pass = scin.nextLine();
+        q.setPass(pass);
+        try {
+            LoginDTO r = this.c.loginHandler(q);
+            if (r.getRespCode().equals(200)) {
 
-                    DecodedJWT tok_dec = JWT.decode(r.getToken());
-                    boolean isAdmin = tok_dec.getClaim("isAdmin").asBoolean();
-                    System.out.println(r.getToken());
-                    if (isAdmin)
-                        ma.menuAdmin();
-                    else
-                        mc.menuCliente();
-                } else {
-                    System.out.println("O login do utilizador está inválido!");
-                }
-            } catch (IOException | BadRequest e) {
-                System.out.println("Houve problemas de comunicação. Tente novamente.");
+                DecodedJWT tok_dec = JWT.decode(r.getToken());
+                boolean isAdmin = tok_dec.getClaim("isAdmin").asBoolean();
+                System.out.println(r.getToken());
+                if (isAdmin)
+                    ma.menuAdmin();
+                else
+                    mc.menuCliente();
+            } else {
+                System.out.println("O login do utilizador está inválido!");
+                this.menuInicial();
             }
+        } catch (IOException | BadRequest e) {
+            System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }
 
