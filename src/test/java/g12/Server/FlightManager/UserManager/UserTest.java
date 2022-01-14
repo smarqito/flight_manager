@@ -3,7 +3,6 @@ package g12.Server.FlightManager.UserManager;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.impl.JWTParser;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
@@ -19,12 +18,6 @@ public class UserTest {
         token = JWT.create().withClaim("User", "marcoSousaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").sign(alg);
         System.out.println(token.length());
         //
-        
-
-
-        DecodedJWT ver = JWT.decode(token);
-        boolean s = ver.getClaim("isAdmin").asBoolean();
-
         JWTVerifier verifier = JWT.require(alg)
                 .build();
         DecodedJWT decoded = verifier.verify(token);

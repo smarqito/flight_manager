@@ -1,7 +1,6 @@
 package g12.Client;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,34 +34,9 @@ public class Client {
 		this.c = c;
 	}
 
-	/**
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		if(args.length != 1) {
-			System.out.println("Client <ip>");
-		} else {
-			try {
-				Socket s = new Socket(args[0], 4444);
-				new Client(new Demultiplexer(s)).clientRunnable();
-			} catch (IOException e) {
-				System.out.println("Nao foi possivel estabelecer ligacao!");
-			}
-		}
-	}
-
 	public DTO queryHandler(DTO dto) throws IOException, BadRequest {
 		QueryThread query = asyncHandler(dto);
-		for (;;) {
-			try {
-				query.join();
-				this.cm.removeThread(query);
-				break;
-			} catch (InterruptedException e) {
-			}
-		}
-		DTO respDTO = null;
+		DTO respDTO = query.result();
 		try {
 			respDTO = query.getResponse();
 			if (respDTO.getClass().getSimpleName().equals(RequestExceptionDTO.class.getSimpleName())) {
