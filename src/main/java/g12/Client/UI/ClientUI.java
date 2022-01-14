@@ -119,9 +119,11 @@ public class ClientUI {
             switch (resp.getRespCode()) {
                 case 200:
                     System.out.println("Registo efetuado com sucesso!");
+                    this.menuInicial();
                     break;
                 default:
                     System.out.println("Ja existe um utilizador com o mesmo nome");
+                    this.menuInicial();
                     break;
             }
         } catch (IOException | BadRequest e) {
