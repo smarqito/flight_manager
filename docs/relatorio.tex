@@ -3,6 +3,9 @@
     %% Cover page text cannot overlay cover sketching/style 
     %% https://ctan.org/pkg/geometry?lang=en
 \usepackage{geometry}
+\geometry{
+    top=30pt
+}
     %% Changes language of some packages protocols
     %% e.g., when captioning images: Figure 1. -> Figura 1.
     %% https://ctan.org/pkg/babel?lang=en
@@ -48,6 +51,9 @@
         urlcolor=black
     }
 
+\usepackage[backend=bibtex, style=numeric-comp]{biblatex}
+\addbibresource{biblio.bib}
+
 \usepackage{amsmath}
     %% Defining backgrouns, used to make the cover
     %% https://ctan.org/pkg/background?lang=en
@@ -71,11 +77,6 @@
 
 \graphicspath{ {./assets/} }
 
-% TODO
-% ABSTRACT - inclui objetivos e descrição MARCO
-% abordar motivo de criar passos e material
-% considerações finais
-
 \begin{document}
 
 \pagenumbering{gobble}
@@ -88,6 +89,7 @@
 %==========================================================================
 
 %% Abstract name: \Large font size, flushed left and paragraph skip before abstract content
+
 \renewenvironment{abstract}
 {\par\noindent\textbf{\Large\abstractname}\par\bigskip}
 {}
@@ -98,19 +100,23 @@
         % How to build an abstract
         % https://users.ece.cmu.edu/~koopman/essays/abstract.html
         %=============
-        O aumento da procura individual por viagens, dentro ou fora do país, leva à globalização 
-        de vários locais outrora desconhecidos ou inabitados por cidadãos de comunidades estrangeiras...
-        Deste modo, tendo em consideração os inúmeros sistemas existentes no mercado que permitem 
-        a gestão de vários pedidos concorrentemente efetuados, é notável as possíveis dificuldades
-        inerentes a estes problemas. 
-        É no sentido de testar os conhecimentos agregados de \textbf{Sistemas Distribuídos}, que foi 
-        construída uma solução, usando técnicas e conceitos transmitidos pela equipa docente.
-        Assim, foi possível desenvolver a nossa aplicação \textbf{Flight Manager}, uma plataforma
-        \textit{servidor-cliente} para lidar com os pedidos relativos à reserva de voos por parte de um cliente.
+        A crescente procura por serviços cliente - servidor, obrigada a que um sistema seja capaz
+        de responder a múltiplos pedidos de forma concorrente.
+        Como consequência, surge a necessidade de moldar o sistema para que este tenha um comportamento
+        determinístico, independentemente da circunstância de utilização.
+        Assim, na sequência da Unidade Curricular de \textbf{Sistemas Distribuídos}, surge a oportunidade
+        de desenvolver uma aplicação com múltiplos clientes e um servidor, ambos \textit{multi-threaded}.
+        
+        O projeto proposto corresponde a um sistema de reservas de voos, denominado \textit{Flight Manager}.
+        Este, conforme referido, será capaz de ter um servidor que responde a múltiplos clientes, de forma
+        concorrente.
+        A linguagem de programação utilização foi \textbf{\textit{Java}}, com recurso a \textit{Socket} TCP
+        para efetuar a comunicação entre cliente-servidor.
+        
         \par \textbf{Área de Aplicação}: Sistemas Distribuídos
         \par \textbf{Palavras-Chave}: Sistemas Distribuídos, \textit{Threads}, \textit{Multithreaded}, 
-                                      \textit{MiddleWare}, Servidor, Cliente, Serialização, \textit{DTO},
-                                      \textit{Sockets}, TCP, \textit{Tagged Connection}
+        \textit{Middleware}, Servidor, Cliente, Serialização, \textit{Data Transfer Object},
+        \textit{Sockets}, TCP, \textit{Tagged Connection}
     \end{abstract}
 \end{flushleft}
 
@@ -130,86 +136,91 @@
 \chapter{Introdução}
 
 O presente relatório foi escrito no âmbito da Unidade Curricular de Sistemas Distribuídos (SD), sendo o
-seu principal objetivo apresentar a solução desenvolvida para responder às necessidades advindas de uma 
-plataforma \textit{servidor-cliente} para reserva de voos.
-É concecionado com a diretiva de facilitar a compreensão dos métodos usados e o planemamento
-estruturado que levou à criação do \textbf{Flight Manager}.
+tendo como principal objetivo apresentar uma possível solução para um Sistema de Gestão de Reservas,
+que iremos designar \textit{Flight Manager}, capaz de responder às funcionalidades propostas pela equipa docente.
 
-Com a entrega deste projeto, é o objetivo do grupo absorver os conceitos lecionados durante o semestre,
-nomeadamente,
+Assim, será apresentado um sistema \textit{cliente-servidor} que, do lado do servidor,
+será capaz de atender múltiplos clientes e, do lado do cliente, será capaz de comunicar com o servidor
+e executar métodos assíncronos e síncronos.
+
+Para dar resposta ao proposto, utilizou-se um componente comum a ambos os sistemas, um \textbf{Middleware},
+que servirá de ponte de ligação entre os \textit{hosts}.
+O objeto de comunicação, será um \textit{Data Transfer Object} e, a partir deste, será derivado
+múltiplos objetos relacionados com pedidos e respostas.
+
+Com o desenvolvimento deste projeto, pretende-se apromirar vários conceitos de Sistemas Distribuídos,
+tais como:
 \begin{itemize}
-    \item Exclusão Mútua
     \item Programação com \textit{Sockets}
-    \item Programação com várias \textit{Threads} (\textit{MultiThread})
+    \item Programação com múltiplas \textit{Threads} (\textit{MultiThread})
+    \item Programação Concorrente (estado partilhado)
+    \item Exclusão Mútua
     \item Serialização de Objetos
+    \item Arquitetura Cliente-Servidor
+    \item Desenvolvimento de \textit{Middleware}
 \end{itemize}
-
-construindo, no final, um sistema que corresponda às funcionalidades básicas propostas pela equipa docente,
-de um modo organizado, aproveitando o encapsulamento e o benefício da programação orientada a objetos, da 
-linguagem \textit{Java}.
 
 %==========================================================================
 % END INTRODUCTION
 %==========================================================================
 
-\chapter{Breve Descrição do Problema}
+\chapter{Análise de Requisitos} \label{chap:analise_requisitos}
 
-Tal como referido, o enunciado propõe a conceção e implementação de uma plataforma para gestão de reservas 
-de voos, apresentando várias vertentes que o sistema deve responder.
+O enunciado proposto, remete à conceção e implementação de uma plataforma para gestão de reservas 
+de voos, apresentando um conjunto de requisitos funcionais que o sistema deve responder.
 
-Os clientes, a quem a plataforma é destinada, podem estabelecer as viagens que desejam, sendo estas um 
-conjunto de vários voos. O cliente, no caso desta ser a sua vontade, pode cancelar as suas viagens.
+A partir do enunciado, identificou-se dois tipos de utilizadores: cliente e adminstrador.
+Cada um terá um conjunto de funcionalidades associadas,
+tendo sido captadas num Diagrama de Use Case (ver \ref{img:use_case}).
 
-Considerando, no sentido de facilitar a implementação, que os mesmos voos repetem-se todos os dias, é possível
-um cliente efetuar uma viagem: A \rightarrow C, caso exista A \rightarrow B e B \rightarrow C.
-
-Adicionalmente, deve ser concecionado uma lista de funcionalidades para os administradores da plataforma, que 
-irão gerir a informação interna do \textbf{Flight Manager}.
-
-O desenvolvimento é marcado por 3 equívocos principais:
+Assim, a nível estrutural, definiu-se três componentes principais:
 \begin{itemize}
-    \item[Cliente] Interface com o Utilizador para usar as funcionalidades
-    \item[Servidor] Responsável pelo \textit{handling} dos \textit{requests} do cliente
-    \item[Comunicação] Entre o cliente e o servidor 
+    \item[\textbf{Cliente}] Interface de interação com o utilizador para utilizar as funcionalidades definidas
+    \item[\textbf{Middleware}] Ponte de comunicação entre o cliente e o servidor
+    \item[\textbf{Servidor}] Responsável pelo tratamento dos pedidos do cliente
 \end{itemize}
 
-Em primeiro lugar, encontra-se o \textbf{cliente}, que inclui
+Definida a estrutura e as funcionalidades, passou-se para a modelação comportamental do sistema.
 
-(i) a apresentação dos pedidos que podem ser efetuados pelos utilizadores, sejam eles
-um \textbf{administrador} ou um \textbf{cliente comum}.
+\section{Modelação Comportamental} \label{strat_esc}
 
-(ii) o envio dos pedidos ao servidor e o tratamento das respostas.
+Por forma a permitir uma implementação sustentada, optou-se por efetuar a modelação comportamental 
+do sistema.
+Para isso, começou-se por definir a forma como o cliente e o servidor iriam comunicar.
+Esta revelou-se como uma das etapas fundamentais para o funcionamento da aplicação,
+tendo como perspetiva a sua escalabilidade e manutenção.
 
-Em segundo, o \textbf{servidor}, que engloba
+\subsection{Comunicação}
 
-(i) o \textit{handling} dos pedidos recebidos dos utilizadores da aplicação.
+A troca de mensagens entre o cliente e o servidor será mediada por um \textbf{Middleware} (ver \ref{img:middleware}).
+Pode-se encontrar um esboço da estratégia analisando o diagrama \ref{img:comunicacao}.
 
-(ii) a conservação das informações internas relativas à plataforma, voos e utilizadores.
+\subsubsection{Middleware}
 
-(iii) um \textit{logger} para atualizar sobre o estado da plataforma, no seu decorrer.
+No \textit{middleware} (ver \ref{img:middleware}), haverá especialização do lado do cliente, por forma a receber respostas e enviar pedidos e
+do lado do servidor, para receber pedidos e enviar respostas.
+Esta especialização, serve apenas para facilitar a implementação, pois, na realidade, o objeto de comunicação
+será sempre o mesmo: uma \mintinline{java}{Frame} que terá no seu corpo informação sobre o pedido, nomeadamente
+uma \textit{tag} que a identifica e um \textit{Data Transfer Object} (DTO).
+Este último, será um dos principais atores na troca de informação, pois a partir da sua especialização,
+será possível criar cada um dos pedidos e cada uma das respostas, conforme o conteúdo necessário.
+Com o objetivo de generalização do código, colocou-se que a classe \textit{DTO} será abstrata e terá como método,
+também este abstrato, a serialização (\textit{serialize}).
 
-Por fim, a \textbf{Comunicação}, agregando
+\subsection{Servidor}
+Dotado de um \textit{ServerSocket}, este será capaz de estabelecer ligação com cada cliente,
+sendo-lhe atribuída uma \textit{Thread} própria, partilhando um estado comum com arquitetura \textbf{Facade}: 
+\mintinline{java}{IFlightManager} (ver \ref{img:flight_manager}).
+Neste, poderá identificar-se dois subsistemas: \textit{Booking Manager} e \textit{User Manager}.
 
-(i) as mensagens construídas para estabelecer a interação entre os utilizadores e o servidor.
+Utilizou-se os princípios \textit{SOLID} \cite{wiki:solid} ao longo da implementação de todo o código,
+assim como o seu planeamento.
 
-\section{Estratégia Utilizada} \label{strat_esc}
+\subsubsection{BookingManager}
 
-Devido ao contexto em que foi realizado, o sistema partiu dos conceitos lecionados no percurso semestral, desde 
-a implementação de um \textit{servidor-cliente}, com o uso de \textit{sockets} \textbf{TCP}, o uso de exclusão 
-mútua para permitir este sistema \textit{multithreaded}, até à serialização de objetos, para o envio das mensagens 
-protocolares definidas.
 
 De modo a ter um desenvolvimento mais estruturado, aplicando recursos disponibilizados através de outras 
 Unidades Curriculares, foram previamente construídos diagramas para os principais elementos do sistema.
-
-Primeiramente, foi necessária uma visão clara dos atores principais que vão interagir com o sistema, sendo construído
-para tal um \textbf{Diagrama de Use Cases}, para demonstrar a dinâmica (Ver \ref{dig:use_cases}).
-
-\begin{figure}[H] \label{dig:use_cases}
-    \centering
-    \includegraphics[width=0.5\textwidth]{diagrams/Server Use Case Diagram.jpg}
-    \caption{Diagrama de Use Cases do \textit{Flight Manager}}
-\end{figure}
 
 A partir das funcionalidades mencionadas no enunciado do trabalho proposto, foram distribuídas as opções para os
 utilizadores da aplicação, seguindo a conceção do sistema.
@@ -217,8 +228,8 @@ utilizadores da aplicação, seguindo a conceção do sistema.
 Esta, divide-se em três grandes componentes:
 \begin{itemize}
     \item[Cliente]{Responsável pela apresentação e envio dos pedidos disponíveis do Cliente.}
-    \item[Servidor]{Responsável pela resposta por parte do Servidor.} 
-    \item[Middleware]{Construtor das \textit{Querys} e \textit{Responses}, bem como gere o suporte para a conexão.} 
+    \item[Servidor]{Responsável pela resposta por parte do Servidor.}
+    \item[Middleware]{Construtor das \textit{Querys} e \textit{Responses}, bem como gere o suporte para a conexão.}
 \end{itemize}
 
 Considerou-se mais intuitivo previamente apresentar o modo como a conexão do Servidor/Cliente é geridas e o tipo
@@ -277,6 +288,8 @@ Outra equívoco seria a adição de mais funcionalidades.
 O aperfeiçoamento da aplicação, de modo a chegar a um estado competitivo para o mercado atual, passaria pela
 implementação de várias e diferentes funcionalidades que o distingue dos restantes produtos análogos.
 
+
+\printbibliography
 %==========================================================================
 % BEGIN LISTA DE SIGLAS E ACRÓNIMOS
 %==========================================================================
@@ -308,7 +321,37 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 %==========================================================================
 
 \addchap{Anexos}
+\addsec{Anexo 1 - Diagrama de Use Case}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.8\linewidth]{diagramas/useCaseDiagram.jpg}
+    \caption{Diagrama de Use Case} \label{img:use_case}
+\end{figure}
 
+\addsec{Anexo 2 - Diagrama de Comunicação}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=\linewidth]{diagramas/MiddlewareCommunicationDiagram.jpg}
+    \caption{Diagrama de Comunicação - versão $\beta$} \label{img:comunicacao}
+\end{figure}
+
+\begin{landscape}
+\addsec{Anexo 3 - Diagrama de Classes do Middleware}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=\linewidth]{diagramas/MiddlewareClassDiagram.jpg}
+    \caption{Diagrama de Classes - Middleware} \label{img:middleware}
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\addsec{Anexo 4 - Diagrama de Classes do FlightManager (Servidor)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=\linewidth]{diagramas/FlightManager.jpg}
+    \caption{Diagrama de Classes - FlightManager} \label{img:flight_manager}
+\end{figure}
+\end{landscape}
 %==========================================================================
 % END ANEXOS
 %==========================================================================
