@@ -20,6 +20,11 @@ class ThreadHandler extends ArrayList<Thread> implements Runnable {
 	Condition c = l.newCondition();
 	boolean isAlive = true;
 
+	/**
+	 * Continuamente vai limpando as threads até:
+	 * socket seja fechado &&
+	 * tamanho da lista seja 0 (permite que threads pendentes terminem)
+	 */
 	@Override
 	public void run() {
 		l.lock();
@@ -39,6 +44,9 @@ class ThreadHandler extends ArrayList<Thread> implements Runnable {
 		}
 	}
 
+	/**
+	 * Limpa as threads que não se encontrem ativas
+	 */
 	public void clearThreads() {
 		l.lock();
 		try {
@@ -52,10 +60,13 @@ class ThreadHandler extends ArrayList<Thread> implements Runnable {
 		}
 	}
 
+	/**
+	 * Verifica se há mais threads ativas no servidor
+	 */
 	public void wait_all_finish() {
 		l.lock();
 		try {
-			boolean active = true;
+			boolean active = hasActiveThread();
 			while (active) {
 				try {
 					c.await(4, TimeUnit.SECONDS);

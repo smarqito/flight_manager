@@ -2,21 +2,36 @@ package g12.Client;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import g12.Client.UI.ClientUI;
 import g12.Middleware.BadRequest;
-import g12.Middleware.ClientConnection;
-import g12.Middleware.Frame;
+import g12.Middleware.Demultiplexer;
+import g12.Middleware.QueryThread;
+import g12.Middleware.StillWaitingException;
 import g12.Middleware.DTO.DTO;
 import g12.Middleware.DTO.ExceptionDTO.RequestExceptionDTO;
 import g12.Middleware.DTO.ResponseDTO.LoginDTO;
 
 public class Client {
 
-	private int tag;
-	private ClientConnection c;
+	private int tag = 0;
+	private Lock l = new ReentrantLock();
 
-	public Client(ClientConnection c) {
+	private Demultiplexer c;
+	public final ClientManager cm = new ClientManager();
+
+	public int getTag() {
+		l.lock();
+		try {
+			return tag++;
+		} finally {
+			l.unlock();
+		}
+	}
+
+	public Client(Demultiplexer c) {
 		this.c = c;
 	}
 
@@ -25,23 +40,38 @@ public class Client {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		try {
-			Socket s = new Socket("localhost", 4444);
-			new Client(new ClientConnection(s)).clientRunnable();
-
-		} catch (IOException e) {
-			System.out.println("Nao foi possivel estabelecer ligacao!");
-			e.printStackTrace();
+		if(args.length != 1) {
+			System.out.println("Client <ip>");
+		} else {
+			try {
+				Socket s = new Socket(args[0], 4444);
+				new Client(new Demultiplexer(s)).clientRunnable();
+			} catch (IOException e) {
+				System.out.println("Nao foi possivel estabelecer ligacao!");
+			}
 		}
 	}
 
 	public DTO queryHandler(DTO dto) throws IOException, BadRequest {
-		Frame f = new Frame(tag++, dto);
-		c.send(f);
-		DTO respDTO = c.receive().getDto();
-		if (respDTO.getClass().getSimpleName().equals(RequestExceptionDTO.class.getSimpleName())) {
-			RequestExceptionDTO rq = (RequestExceptionDTO) respDTO;
-			throw new BadRequest(rq.getMessage());
+		QueryThread query = asyncHandler(dto);
+		for (;;) {
+			try {
+				query.join();
+				this.cm.removeThread(query);
+				break;
+			} catch (InterruptedException e) {
+			}
+		}
+		DTO respDTO = null;
+		try {
+			respDTO = query.getResponse();
+			if (respDTO.getClass().getSimpleName().equals(RequestExceptionDTO.class.getSimpleName())) {
+				RequestExceptionDTO rq = (RequestExceptionDTO) respDTO;
+				throw new BadRequest(rq.getMessage());
+			}
+		} catch (StillWaitingException e) {
+			// nao vai acontecer pq faz join previamente ate a thread terminar (receber
+			// pacote)
 		}
 		return respDTO;
 	}
@@ -54,9 +84,28 @@ public class Client {
 		return r;
 	}
 
-	public void clientRunnable() {
+	/**
+	 * Efetua o envio do DTO, não ficando a espera do mesmo.
+	 * 
+	 * @param dto DTO a enviar
+	 * @return Número do pedido que foi criado, para que a instância que chamou
+	 *         possa fazer wait quando pretender
+	 * @throws IOException
+	 * @throws BadRequest
+	 */
+	public QueryThread asyncHandler(DTO dto) throws IOException {
+		int tag = this.getTag();
+		QueryThread query = new QueryThread(dto, tag, c);
+		this.cm.addThread(query);
+		query.start();
+		return query;
+	}
+
+	public void clientRunnable() throws IOException {
 		ClientUI cUi = new ClientUI(this);
+		this.c.start(); // inicia receive socket
 		cUi.run();
+		this.c.close();
 	}
 
 	/**
@@ -83,6 +132,7 @@ public class Client {
 	 * 1.1. : Reservar Voo
 	 * 1.1.1 Ver voos disponiveis
 	 * 1.1.2 Fazer reserva
+	 * 1.1.3 Ver reservas pendentes
 	 * 
 	 * 1.1.2 : Fazer reserva
 	 * 1.1.2.1 Pedir percurso, separados por virgula

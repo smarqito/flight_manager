@@ -32,7 +32,7 @@ public class BookingManager implements IBookingManager {
 			this.voosDiarios.add(v);
 			g.lock();
 			try {
-				if (grafo.containsKey(v.getOrigem())){
+				if (grafo.containsKey(v.getOrigem())) {
 					List<String> arestas = grafo.get(v.getOrigem());
 					arestas.add(v.getDestino());
 					grafo.put(v.getOrigem(), arestas);
@@ -42,7 +42,7 @@ public class BookingManager implements IBookingManager {
 					grafo.put(v.getOrigem(), arestas);
 
 				}
-			}finally {
+			} finally {
 				g.unlock();
 			}
 
@@ -88,7 +88,7 @@ public class BookingManager implements IBookingManager {
 
 	public String bookFlight(String user, List<String> percurso, LocalDate de, LocalDate ate) throws VooNaoExistente,
 			ReservaIndisponivel, PercusoNaoDisponivel, BookingDayJaExiste, DiaFechado, VooJaExiste {
-		if (de.compareTo(LocalDate.now()) < 0 || de.compareTo(ate) > 0){
+		if (de.compareTo(LocalDate.now()) < 0 || de.compareTo(ate) > 0) {
 			throw new ReservaIndisponivel("Datas erradas");
 		}
 		l.lock();
@@ -101,7 +101,7 @@ public class BookingManager implements IBookingManager {
 			l.unlock();
 		}
 		Reserva r = new Reserva(user);
-		while (percurso.size() <= 1 && de.compareTo(ate) < 0) {
+		while (percurso.size() >= 1 && de.compareTo(ate) < 0) {
 			l.lock();
 			BookingDay bd;
 			try {
@@ -224,8 +224,8 @@ public class BookingManager implements IBookingManager {
 		}
 	}
 
-	public List<List<String>> getFlightList(String origem, String destino){
-		Queue<List<String> > queue = new LinkedList<>();
+	public List<List<String>> getFlightList(String origem, String destino) {
+		Queue<List<String>> queue = new LinkedList<>();
 		List<List<String>> voos = new ArrayList<>();
 		this.g.lock();
 		try {
@@ -233,7 +233,7 @@ public class BookingManager implements IBookingManager {
 			List<String> path = new ArrayList<>();
 			path.add(origem);
 			queue.offer(path);
-			//minimizar o custo (Set)
+			// minimizar o custo (Set)
 			while (!queue.isEmpty()) {
 				path = queue.poll();
 				String last = path.get(path.size() - 1);
@@ -257,16 +257,15 @@ public class BookingManager implements IBookingManager {
 					}
 				}
 			}
-		}finally {
+		} finally {
 			this.g.unlock();
 		}
 		return voos;
 	}
 
-	private boolean isNotVisited(String x, List<String> path)
-	{
+	private boolean isNotVisited(String x, List<String> path) {
 		int size = path.size();
-		for(int i = 0; i < size; i++)
+		for (int i = 0; i < size; i++)
 			if (path.get(i).equals(x))
 				return false;
 
