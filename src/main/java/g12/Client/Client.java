@@ -40,11 +40,15 @@ public class Client {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		try {
-			Socket s = new Socket("localhost", 4444);
-			new Client(new Demultiplexer(s)).clientRunnable();
-		} catch (IOException e) {
-			System.out.println("Nao foi possivel estabelecer ligacao!");
+		if(args.length != 1) {
+			System.out.println("Client <ip>");
+		} else {
+			try {
+				Socket s = new Socket(args[0], 4444);
+				new Client(new Demultiplexer(s)).clientRunnable();
+			} catch (IOException e) {
+				System.out.println("Nao foi possivel estabelecer ligacao!");
+			}
 		}
 	}
 
