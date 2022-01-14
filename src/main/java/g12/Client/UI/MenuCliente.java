@@ -12,10 +12,8 @@ import g12.Middleware.DTO.QueryDTO.AvailableFlightsQueryDTO;
 import g12.Middleware.DTO.QueryDTO.BookFlightQueryDTO;
 import g12.Middleware.DTO.QueryDTO.CancelBookQueryDTO;
 import g12.Middleware.DTO.ResponseDTO.AvailableFlightsDTO;
-import g12.Middleware.DTO.ResponseDTO.BookFlightDTO;
 import g12.Middleware.DTO.ResponseDTO.ResponseDTO;
 import g12.Middleware.DTO.ResponseDTO.UnitDTO;
-
 
 public class MenuCliente {
 
@@ -56,13 +54,17 @@ public class MenuCliente {
         Menu menu = new Menu(new String[] {
                 "Ver voos disponíveis",
                 "Ver percursos possíveis (limitado a 2 escalas)",
-                "Fazer reserva"
+                "Fazer reserva",
+                "Ver pedidos de reserva concluídos"
         });
 
         // Registar handlers
         menu.setHandler(1, this::menuVerVoosDisp);
         menu.setHandler(2, this::menuPercursosPossiveis);
         menu.setHandler(3, this::menuReserva);
+        menu.setHandler(4, this::menuReservasPendentes);
+
+        menu.setPreCondition(4, () -> this.c.cm.hasPending() > 0);
 
         menu.run();
     }
@@ -101,27 +103,10 @@ public class MenuCliente {
             params.addAll(s);
 
             BookFlightQueryDTO q = new BookFlightQueryDTO(params, min, max);
-            ResponseDTO r = (ResponseDTO) this.c.queryHandler(q);
-            switch (r.getRespCode()) {
-                case 200:
-                    BookFlightDTO resp = (BookFlightDTO) r;
-                    System.out.println("Reserva efetuada com o ID: " + resp.getBookId());
-                    break;
-                case 401:
-                    System.out.println("Nao tem permissoes.");
-                    break;
-                case 402:
-                    System.out.print("Voo não existe!");
-                    break;
-                case 403:
-                    System.out.println("Percurso não disponível!");
-                    break;
-                default:
-                    System.out.println("Recusado.Verifique os parametros inseridos!");
-                    break;
-            }
-        } catch (IOException |
-                BadRequest e) {
+            this.c.asyncHandler(q);
+            System.out.println("O seu pedido foi efetuado.");
+            System.out.println("Pode acompanhar no menu de pendentes!");
+        } catch (IOException e) {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
     }
@@ -155,7 +140,8 @@ public class MenuCliente {
     }
 
     /**
-     * Método que obter os percursos possíveis entre uma origem e destino (limitado a 2 escalas)
+     * Método que obter os percursos possíveis entre uma origem e destino (limitado
+     * a 2 escalas)
      */
     private void menuPercursosPossiveis() {
         try {
@@ -164,7 +150,7 @@ public class MenuCliente {
             String dest = ClientUI.scin.nextLine();
             GetFlightListQueryDTO q = new GetFlightListQueryDTO(origem, dest);
             ResponseDTO r = (ResponseDTO) this.c.queryHandler(q);
-            switch (r.getRespCode()){
+            switch (r.getRespCode()) {
                 case 200:
                     GetFlightListDTO resp = (GetFlightListDTO) r;
                     System.out.println(resp.toString());
@@ -177,5 +163,9 @@ public class MenuCliente {
             System.out.println("Houve problemas de comunicação. Tente novamente.");
         }
 
+    }
+
+    private void menuReservasPendentes() {
+        this.c.cm.getEndedThreads().stream().forEach(x -> DTOPrinter.printFlightBooking((ResponseDTO) x));
     }
 }

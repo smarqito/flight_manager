@@ -43,4 +43,25 @@ public class QueryThread extends Thread {
         return this.responseDTO;
     }
 
+    /**
+     * transforma o metodo async num metodo sync, esperando pelo resultado
+     * 
+     * @return
+     * @throws IOException
+     */
+    public DTO result() throws IOException {
+        for (;;) {
+            try {
+                this.join();
+                break;
+            } catch (InterruptedException e) {
+            }
+        }
+        try {
+            return this.getResponse();
+        } catch (StillWaitingException e) {
+            throw new IOException(e.getMessage()); // nao acontece, fez wait previamente
+        }
+    }
+
 }

@@ -20,6 +20,7 @@ public class Client {
 	private Lock l = new ReentrantLock();
 
 	private Demultiplexer c;
+	public ClientManager cm = new ClientManager();
 
 	public int getTag() {
 		l.lock();
@@ -52,6 +53,7 @@ public class Client {
 		for (;;) {
 			try {
 				query.join();
+				this.cm.removeThread(query);
 				break;
 			} catch (InterruptedException e) {
 			}
@@ -90,6 +92,7 @@ public class Client {
 	public QueryThread asyncHandler(DTO dto) throws IOException {
 		int tag = this.getTag();
 		QueryThread query = new QueryThread(dto, tag, c);
+		this.cm.addThread(query);
 		query.start();
 		return query;
 	}
@@ -125,6 +128,7 @@ public class Client {
 	 * 1.1. : Reservar Voo
 	 * 1.1.1 Ver voos disponiveis
 	 * 1.1.2 Fazer reserva
+	 * 1.1.3 Ver reservas pendentes
 	 * 
 	 * 1.1.2 : Fazer reserva
 	 * 1.1.2.1 Pedir percurso, separados por virgula
