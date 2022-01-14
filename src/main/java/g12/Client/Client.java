@@ -20,7 +20,7 @@ public class Client {
 	private Lock l = new ReentrantLock();
 
 	private Demultiplexer c;
-	public ClientManager cm = new ClientManager();
+	public final ClientManager cm = new ClientManager();
 
 	public int getTag() {
 		l.lock();

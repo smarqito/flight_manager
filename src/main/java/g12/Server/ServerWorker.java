@@ -190,9 +190,8 @@ public class ServerWorker implements Runnable {
 	}
 
 	public DTO availableFlights(QueryDTO dto) {
-		AvailableFlightsQueryDTO q = (AvailableFlightsQueryDTO) dto;
 		try {
-			String user = checkToken(dto.getToken());
+			checkToken(dto.getToken());
 			List<Voo> voos = this.model.availableFlights();
 			VoosDTO voosDTO = new VoosDTO();
 			for (Voo v : voos) {
@@ -207,7 +206,7 @@ public class ServerWorker implements Runnable {
 	public DTO getFligthList(QueryDTO dto) {
 		GetFlightListQueryDTO q = (GetFlightListQueryDTO) dto;
 		try {
-			String user = checkToken(dto.getToken());
+			checkToken(dto.getToken());
 			List<List<String>> voos = this.model.getFlightList(q.getOrigem(), q.getDest());
 			return new GetFlightListDTO(200, voos);
 
