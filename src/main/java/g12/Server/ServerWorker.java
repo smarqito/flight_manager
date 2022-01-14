@@ -204,7 +204,7 @@ public class ServerWorker implements Runnable {
 		}
 	}
 
-	public DTO getFligthList(QueryDTO dto){
+	public DTO getFligthList(QueryDTO dto) {
 		GetFlightListQueryDTO q = (GetFlightListQueryDTO) dto;
 		try {
 			String user = checkToken(dto.getToken());

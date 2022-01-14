@@ -55,7 +55,7 @@ class ThreadHandler extends ArrayList<Thread> implements Runnable {
 	public void wait_all_finish() {
 		l.lock();
 		try {
-			boolean active = true;
+			boolean active = hasActiveThread();
 			while (active) {
 				try {
 					c.await(4, TimeUnit.SECONDS);
