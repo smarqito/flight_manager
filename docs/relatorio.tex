@@ -246,7 +246,7 @@ Para permitir a escalabilidade do sistema, ambos especializam uma classe abstrat
 \subsubsection{Flight Manager}
 Conforme referido, foi utilizada uma estratégia \textit{Facade} para o desenvolvimento
 do estado partilhado no \textbf{Servidor}.
-Assim, a classe agregadora designa-se \textit{FlightMinegerFacade} que implementa a API definida
+Assim, a classe agregadora designa-se \textit{FlightManagerFacade} que implementa a API definida
 pela interface \textit{IFlightManager}.
 Como é habitual neste tipo de estratégias, esta classe permite conjugar métodos relacionados com 
 o \textit{Booking Manager} e o \textit{User Manager}.
@@ -388,7 +388,7 @@ considerados fulcrais na implementação do sistema proposto.
     
     Portanto, o servidor segue a seguinte sequência de acontecimentos:
     \begin{enumerate}
-        \item Efetua a leitura do estado (FlightMinegerFacade) a partir de um ficheiro de objetos;
+        \item Efetua a leitura do estado (FlightManagerFacade) a partir de um ficheiro de objetos;
         \item Inicia um \textit{Logger}
         \item Injeta esse estado numa classe que estará à escuta de uma \textit{ServerSocket} na porta $4444$;
         \item Inicia a \textit{thread} paralela
