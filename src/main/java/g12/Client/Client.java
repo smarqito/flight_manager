@@ -15,19 +15,17 @@ import g12.Middleware.DTO.ResponseDTO.LoginDTO;
 
 public class Client {
 
+	/**
+	 * Apenas uma thread vai aceder à tag.
+	 * Por esse motivo, não se implementa Lock
+	 */
 	private int tag = 0;
-	private Lock l = new ReentrantLock();
 
 	private Demultiplexer c;
 	public final ClientManager cm = new ClientManager();
 
 	public int getTag() {
-		l.lock();
-		try {
-			return tag++;
-		} finally {
-			l.unlock();
-		}
+		return tag++;
 	}
 
 	public Client(Demultiplexer c) {

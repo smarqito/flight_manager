@@ -4,7 +4,9 @@
     %% https://ctan.org/pkg/geometry?lang=en
 \usepackage{geometry}
 \geometry{
-    top=30pt
+    top=40pt,
+    left=40pt,
+    right=40pt
 }
     %% Changes language of some packages protocols
     %% e.g., when captioning images: Figure 1. -> Figura 1.
@@ -70,6 +72,16 @@
 \usepackage{float}
 
 \usepackage{minted}
+\setminted[java]{ %
+    linenos=true,             % Line numbers
+    autogobble=true,          % Automatically remove common white space
+    frame=lines,
+    breaklines,
+    framesep=2mm,
+    fontsize=\footnotesize
+}
+
+\usepackage{multicol}
 
 %% Costume made cover 
 %% From there you can use \makecover command to build the cover
@@ -209,46 +221,221 @@ também este abstrato, a serialização (\textit{serialize}).
 
 \subsection{Servidor}
 Dotado de um \textit{ServerSocket}, este será capaz de estabelecer ligação com cada cliente,
-sendo-lhe atribuída uma \textit{Thread} própria, partilhando um estado comum com arquitetura \textbf{Facade}: 
+sendo-lhe atribuída uma \textit{Thread} e \textit{Socket} própria, partilhando um estado comum com arquitetura \textbf{Facade}: 
 \mintinline{java}{IFlightManager} (ver \ref{img:flight_manager}).
 Neste, poderá identificar-se dois subsistemas: \textit{Booking Manager} e \textit{User Manager}.
+
+Sendo um servidor \textit{multi-threaded}, é necessário que haja controlo de concorrência.
+Assim, pode-se verificar junto dos diagramas que serão referenciados e na secção de implementação
+as estratégias utilizadas.
 
 Utilizou-se os princípios \textit{SOLID} \cite{wiki:solid} ao longo da implementação de todo o código,
 assim como o seu planeamento.
 
-\subsubsection{BookingManager}
+\subsubsection{Booking Manager}
 
+Lógica relacionada com os processos de reserva de vôos, tais como os vôos diários disponíveis
+no sistema, uma abstração do dia (com os respetivos vôos associados) e as reservas propriamente ditas.
+Ver \ref{img:booking_manager}
 
-De modo a ter um desenvolvimento mais estruturado, aplicando recursos disponibilizados através de outras 
-Unidades Curriculares, foram previamente construídos diagramas para os principais elementos do sistema.
+\subsubsection{User Manager}
+Lógica relacionada com a gestão dos utilizados. Tal como referido, existe dois tipos:
+\textit{Administrador} e \textit{Cliente}.
+Para permitir a escalabilidade do sistema, ambos especializam uma classe abstrata designada
+\textbf{Utilizador}. Ver \ref{img:user_manager}
 
-A partir das funcionalidades mencionadas no enunciado do trabalho proposto, foram distribuídas as opções para os
-utilizadores da aplicação, seguindo a conceção do sistema.
+\subsubsection{Flight Manager}
+Conforme referido, foi utilizada uma estratégia \textit{Facade} para o desenvolvimento
+do estado partilhado no \textbf{Servidor}.
+Assim, a classe agregadora designa-se \textit{FlightMinegerFacade} que implementa a API definida
+pela interface \textit{IFlightManager}.
+Como é habitual neste tipo de estratégias, esta classe permite conjugar métodos relacionados com 
+o \textit{Booking Manager} e o \textit{User Manager}.
 
-Esta, divide-se em três grandes componentes:
-\begin{itemize}
-    \item[Cliente]{Responsável pela apresentação e envio dos pedidos disponíveis do Cliente.}
-    \item[Servidor]{Responsável pela resposta por parte do Servidor.}
-    \item[Middleware]{Construtor das \textit{Querys} e \textit{Responses}, bem como gere o suporte para a conexão.}
-\end{itemize}
+\subsection{Cliente}
+Em termos estruturais, o cliente apresenta uma lógica bastante mais simples.
+No entanto, por forma a implementar algumas funcionalidades adicionais, nomeadamente
+a possibilidade de efetuar uma reserva sem que se tenha de esperar pela sua conclusão,
+houve necessidade de implementar um \textit{ClientManager} (\ref{sec:client_manager}).
 
-Considerou-se mais intuitivo previamente apresentar o modo como a conexão do Servidor/Cliente é geridas e o tipo
-de mensagens criadas, sendo a primeira grande componente da aplicação a ser apresentada o: \textit{Middleware}.
+\subsubsection{ClientManager} \label{sec:client_manager}
+Classe que permite ao cliente que este seja \textit{multi-threaded} mas apenas ao nível dos pedidos,
+com o objetivo de serem não bloqueantes.
+Quer isto dizer que, apesar de haver uma \textit{thread} principal a tratar do interface
+e da lógica do cliente, este pode utilizar métodos assincronos, que são executados por 
+outras \textit{threads} que lhe ficam associadas.
 
-\subsection{Middleware}
-\subfile{middleware.tex}
+\chapter{Implementação}
+Devido ao curto número de páginas definido pela equipa docente, será apenas abordado alguns pontos
+considerados fulcrais na implementação do sistema proposto.
 
-\section{Cliente}
-\subfile{cliente.tex}
+\begin{multicols}{2}[\section{Middleware}]
+    Tanto o cliente como o servidor utilizam a mesma classe base para 
+    gerir a ligação, \textit{TaggedConnection}.
+    Cada mensagem foi encapsulada numa \textit{Frame}
+    que é identificada por uma \textit{tag}.
+    Tem, ainda, o nome da classe que está a transportar e
+    a própria classe.
+    Desta forma, permite-te que se faça a \textit{deserialization}
+    de forma bastante simples e elegante.
+    Para isso, foi introduzido um \mintinline{java}{Map<String, Class<? extends DTO>>}
+    que mapeia o nome da classe para o seu tipo concreto com entradas do tipo
+    \mintinline{java}{entry(UnitDTO.class.getSimpleName(), UnitDTO.class)}.
+    Depois desta etapa, obtém-se o método \textit{deserialize} da classe que,
+    conforme definido, é implementado por todas as 
+    \mintinline{java}{Class<? extends DTO>}.
+    Assim, a leitura do \textit{Socket} é efetuada em 3 etapas:
+    \begin{enumerate}
+        \item Ler o nome da classe
+        \item Mapear o nome para o tipo concreto
+        \item Invocar p método \textit{deserialize} adequado
+    \end{enumerate}
+    \begin{minted}{java}
+            Class<? extends DTO> p = getMapping(cName);
+            Method m = p.getMethod("deserialize", DataInputStream.class);
+            DTO dto = (DTO) m.invoke(null, in);
+            return new Frame(tag, dto);
+    \end{minted}
+    Por forma a melhorar a eficiência do cliente, foi desenvolvido
+    um \textit{Demultiplexer} que corresponde a ter uma \textit{Thread}
+    em execução apenas para efetuar a leitura da \textit{Socket}, 
+    efetuar o \textit{deserialize} adequado e adicionar à \textit{Entry}
+    correpondente, identificada pela \textbf{tag}.
+    Posteriormente, a \textit{Thread} que estava à espera é notificada para
+    que possa ler a partir da \textit{Queue} de \textbf{DTO} associado.
+    \begin{minted}{java}
+        final Condition cond = mLock.newCondition();
+        final ArrayDeque<DTO> queue = new ArrayDeque<>();
+        int waiters = 0;
+    \end{minted}
+    
+    Ainda a este nível, foi implementado uma classe que especializa a \textit{Thread}:
+    \mintinline{java}{class QueryThread}.
+    Pretende-se que esta permita uma chamada assíncrona do método.
+    Para isso, o construtor recebe um \textbf{DTO} (\textit{Query}), a \textit{tag}
+    e um apontador para o \textit{Demultiplexer}: 
+    \mintinline{java}{QueryThread(DTO queryDTO, int tag, Demultiplexer c)}.
+    Ao utilizar esta classe, permite que um pedido ao servidor seja feito
+    por uma \textit{Thread} especifica para o efeito.
+    Caso pretenda esperar pelo resultado, utilizará o método \mintinline{java}{public DTO result()}.
+    Se pretender obter o resultado (caso já esteja disponível), utilizará o método
+    \mintinline{java}{public DTO getResponse()}.
+    Com esta estratégia, foi possível implementar a funcionalidade adicional proposta
+    que corresponde ao paralelismo na execução de pedidos, de uma forma generalizada e escalável.    
+    
+\end{multicols}
 
-\section{Servidor}
-\subfile{servidor.tex}
+\begin{multicols}{2}[\section{Cliente}]
+    Posto a implementação definida no ponto anterior, procedeu-se à implementação
+    do \textit{interface} gráfico de interação com o utilizador.
+    Atendendo que este não era o foco do projeto, implementou-se uma versão estritamente
+    essencial.
+    Assim, pode-se encontrar um sistema de menus que foi representado numa máquina
+    de estados (ver \ref{img:menu_estados}).
+    
+    Para lidar com os pedidos, introduziu-se dois métodos principais: (i) \mintinline{java}{public QueryThread asyncHandler(DTO dto)}
+    e (ii) \mintinline{java}{public DTO queryHandler(DTO dto)}.
+    \begin{itemize}
+        \item[(i)]{
+              Coloca uma nova \textit{thread} em execução, ficando esta a aguardar pela resposta.
+              Adiciona-a, ainda, ao \textbf{ClientManager} (\ref{sec:client_manager}) para ficar acessível
+              ao cliente.
+              }
+        \item[(ii)]{
+              Utiliza o método (i) e fica a aguardar pelo resultado através do método
+              \textit{result()} que efetua uma espera passiva pela conclusão da \textit{thread}.
+              Corresponde à transformação de um método assincrono em um síncrono.
+              }
+    \end{itemize}
+    Para além destes, existe ainda um método específico para lidar com o login,
+    pois tem a particularidade de definir no cliente o \textbf{token} que recebeu
+    do servidor e terá de utilizar nas comunicações futuras.
+    
+    A estratégia utilizada para pedir algo ao servidor corresponde, portanto, à 
+    sequência de 3 etapas:
+    \begin{enumerate}
+        \item {
+              Construção do \textit{DTO} associado ao pedido, pedindo ao cliente os parâmetros
+              necessários através do \textit{Stdin};
+              } 
+        \item {
+              Utilização do método síncrono ou assíncrono (queryHandler ou asyncHandler).
+              }
+        \item {
+              Leitura e apresentação da resposta do servidor, em conformidade
+              com o recebido
+              }
+    \end{enumerate}
+    Como exemplo, pode-se verificar o menu \textbf{reserva} em que é efetuado um
+    pedido de forma assincrona (apenas a componente de pedir a query):
+    \begin{minted}{java}
+        BookFlightQueryDTO q = new BookFlightQueryDTO(params, min, max);
+        this.c.asyncHandler(q);
+        System.out.println("O seu pedido foi efetuado.");
+        System.out.println("Pode acompanhar no menu de pendentes!");
+    \end{minted}
+    Neste excerto de código, pode-se verificar que não é esperado a resposta do 
+    pedido efetuado. 
+    O sistema remete o cliente para um menu próprio onde pode consultar
+    pedidos (de reservas) que estejam concluídos.
+\end{multicols}
 
-\section{Funcionalidades Adicionais}
-
-No seguimento da realização das funcionalidade obrigatórias pré-definidas pela equipa docente, 
-foi considerada a adição de aspetos adicionais, de modo a enriquecer a resposta previamente 
-construída.
+\begin{multicols}{2}[\section{Servidor}]
+    Por ser um servidor \textit{multi-threaded}, a sua implementação foi
+    mais complexa, por forma a evitar \textit{dead-locks}, alteração de estado
+    a meio de transações, entre outros.
+    Assim, houve a necessidade de implementar vários \textit{Locks} em níveis
+    diferentes da estrutura e para controlo de diferentes estados.
+    
+    Portanto, o servidor segue a seguinte sequência de acontecimentos:
+    \begin{enumerate}
+        \item Efetua a leitura do estado (FlightMinegerFacade) a partir de um ficheiro de objetos;
+        \item Inicia um \textit{Logger}
+        \item Injeta esse estado numa classe que estará à escuta de uma \textit{ServerSocket} na porta $4444$;
+        \item Inicia a \textit{thread} paralela
+        \item Coloca a \textit{thread} principal à escuta do \textit{System.in}
+    \end{enumerate}
+    Começando pelo último ponto, é permitido que o utilizador termine o servidor a qualquer
+    altura. Esta terminação é efetuada de forma eloquente, i.e. começa por fechar a socket
+    de entrada no servidor (não permitindo novas ligações), mas permite que os clientes ligados terminem as suas transações.
+    Apenas quando todos os clientes terminarem as suas transações, o servidor encerrará e gravará 
+    o seu estado atual num ficheiro de objetos.
+    
+    Sempre que um cliente se estabelece ligação com um servidor, é criado uma
+    nova \textit{thread} designada \mintinline{java}{class ServerWorker}
+    que terá acesso ao modelo (estado partilhado), à sua \textit{Socket}
+    e a uma \mintinline{java}{class ThreadHandler} (partilhada).
+    
+    Começando pela \textit{ThreadHandler}, permite a gestão dos clientes que estão
+    ligados ao servidor.
+    O método \textit{run()} está em espera passiva e sempre que há uma nova ligação,
+    percorre a sua lista de \textit{threads} e remove as que já não estiverem ativas.
+    Esta classe é utilizada, também, quando se pretende encerrar o servidor, pois será
+    esta que ficará à espera que todos os clientes terminem a sua transação.
+    
+    O \textit{ServerWorker} permite que cada \textit{thread} que estabeleceu ligação
+    lide com os pedidos do cliente.
+    Tal como anteriormente, utilizou-se uma estratégia semelhante para lidar com a conversão
+    do \textbf{DTO} abstrato para o especifico enviado pelo cliente.
+    Utiliza-se um \mintinline{java}{Map<String, Function<QueryDTO, DTO>>} que permite,
+    a partir do nome da classe, chamar o método que efetuará o tratamento do pedido.
+    As entradas do mapa são do tipo:
+    \begin{minted}{java}
+        entry(LoginQueryDTO.class.getSimpleName(), (x) -> this.loginHandler(x))
+    \end{minted}
+    Desta forma, sempre que o servidor recebe um pedido, para além de escrever um
+    \textit{Log} que permite ter um histórico de pedidos recebidos, é capaz o converter
+    num resultado e responder ao cliente com uma implementação bastante \textit{clean}:
+    \begin{minted}{java}
+	public void requestHandler(Frame f)  {
+		QueryDTO dto = (QueryDTO) f.getDto();
+		String method = dto.getClass().getSimpleName();
+		DTO r = getMapping(method).apply(dto);
+		this.c.send(new Frame(f.tag, r));
+	}
+        
+    \end{minted}
+\end{multicols}
 
 \chapter{Considerações Finais}
 \section{Conclusões}
@@ -302,7 +489,7 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 
 %% acronyms
 \nomenclature[01]{\textbf{SD}}{Sistemas Distribuídos}
-\nomenclature[02]{\textbf{DTO}}{\textit{Data-Transfer Object}}
+\nomenclature[02]{\textbf{DTO}}{\textit{Data Transfer Object}}
 \nomenclature[03]{\textbf{UC}}{Unidade Curricular}
 \nomenclature[04]{\textbf{plataforma}}{Sistema de gestão de reservas de voos}
 \nomenclature[05]{\textbf{sistema}}{Sistema de gestão de reservas de voos}
@@ -324,34 +511,64 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 \addsec{Anexo 1 - Diagrama de Use Case}
 \begin{figure}[!ht]
     \centering
-    \includegraphics[width=0.8\linewidth]{diagramas/useCaseDiagram.jpg}
+    \includegraphics[scale=0.75]{diagramas/useCaseDiagram.jpg}
     \caption{Diagrama de Use Case} \label{img:use_case}
 \end{figure}
 
-\addsec{Anexo 2 - Diagrama de Comunicação}
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[width=\linewidth]{diagramas/MiddlewareCommunicationDiagram.jpg}
-    \caption{Diagrama de Comunicação - versão $\beta$} \label{img:comunicacao}
-\end{figure}
-
 \begin{landscape}
-\addsec{Anexo 3 - Diagrama de Classes do Middleware}
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[width=\linewidth]{diagramas/MiddlewareClassDiagram.jpg}
-    \caption{Diagrama de Classes - Middleware} \label{img:middleware}
-\end{figure}
+    \addsec{Anexo 2 - Diagrama de Comunicação}
+    \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=\linewidth]{diagramas/MiddlewareCommunicationDiagram.jpg}
+        \caption{Diagrama de Comunicação - versão $\beta$} \label{img:comunicacao}
+    \end{figure}
 \end{landscape}
 
 \begin{landscape}
-\addsec{Anexo 4 - Diagrama de Classes do FlightManager (Servidor)}
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[width=\linewidth]{diagramas/FlightManager.jpg}
-    \caption{Diagrama de Classes - FlightManager} \label{img:flight_manager}
-\end{figure}
+    \addsec{Anexo 3 - Diagrama de Classes do Middleware}
+    \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=\linewidth]{diagramas/MiddlewareClassDiagram.jpg}
+        \caption{Diagrama de Classes - Middleware} \label{img:middleware}
+    \end{figure}
 \end{landscape}
+
+\begin{landscape}
+    \addsec{Anexo 4 - Diagrama de Classes do FlightManager (Servidor)}
+    \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=\linewidth]{diagramas/FlightManager.jpg}
+        \caption{Diagrama de Classes - FlightManager} \label{img:flight_manager}
+    \end{figure}
+\end{landscape}
+
+\begin{landscape}
+    \addsec{Anexo 5 - Diagrama de Classes do Booking Manager (Servidor)}
+    \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=0.9\linewidth]{diagramas/BookingManagerClassDiagram.jpg}
+        \caption{Diagrama de Classes - BookingManager} \label{img:booking_manager}
+    \end{figure}
+\end{landscape}
+
+\begin{landscape}
+    \addsec{Anexo 6 - Diagrama de Classes do User Manager (Servidor)}
+    \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=0.75\linewidth]{diagramas/UserManagerClassDiagram.jpg}
+        \caption{Diagrama de Classes - BookingManager} \label{img:user_manager}
+    \end{figure}
+\end{landscape}
+
+\begin{landscape}
+    \addsec{Anexo 7 - Diagrama Pseudo-Estado Menu de UI}
+    \begin{figure}[!ht]
+        \centering
+        \includegraphics[scale=0.7]{diagramas/MenuUI.jpg}
+        \caption{Diagrama de Estado - Sistema de Menu} \label{img:menu_estados}
+    \end{figure}
+\end{landscape}
+
 %==========================================================================
 % END ANEXOS
 %==========================================================================
