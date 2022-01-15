@@ -1,10 +1,10 @@
-\documentclass[a4paper,11pt]{scrreprt}
+\documentclass[a4paper,11pt]{article}
     %% Used for changing geometry of the page
     %% Cover page text cannot overlay cover sketching/style 
     %% https://ctan.org/pkg/geometry?lang=en
 \usepackage{geometry}
 \geometry{
-    top=40pt,
+    top=30pt,
     left=40pt,
     right=40pt
 }
@@ -73,7 +73,6 @@
 
 \usepackage{minted}
 \setminted[java]{ %
-    linenos=true,             % Line numbers
     autogobble=true,          % Automatically remove common white space
     frame=lines,
     breaklines,
@@ -145,7 +144,7 @@
 %% Starting page numbering here
 \pagenumbering{arabic}
 
-\chapter{Introdução}
+\section{Introdução}
 
 O presente relatório foi escrito no âmbito da Unidade Curricular de Sistemas Distribuídos (SD), sendo o
 tendo como principal objetivo apresentar uma possível solução para um Sistema de Gestão de Reservas,
@@ -176,7 +175,7 @@ tais como:
 % END INTRODUCTION
 %==========================================================================
 
-\chapter{Análise de Requisitos} \label{chap:analise_requisitos}
+\section{Análise de Requisitos} \label{chap:analise_requisitos}
 
 O enunciado proposto, remete à conceção e implementação de uma plataforma para gestão de reservas 
 de voos, apresentando um conjunto de requisitos funcionais que o sistema deve responder.
@@ -194,7 +193,7 @@ Assim, a nível estrutural, definiu-se três componentes principais:
 
 Definida a estrutura e as funcionalidades, passou-se para a modelação comportamental do sistema.
 
-\section{Modelação Comportamental} \label{strat_esc}
+\subsection{Modelação Comportamental} \label{strat_esc}
 
 Por forma a permitir uma implementação sustentada, optou-se por efetuar a modelação comportamental 
 do sistema.
@@ -202,7 +201,7 @@ Para isso, começou-se por definir a forma como o cliente e o servidor iriam com
 Esta revelou-se como uma das etapas fundamentais para o funcionamento da aplicação,
 tendo como perspetiva a sua escalabilidade e manutenção.
 
-\subsection{Comunicação}
+\subsubsection{Comunicação}
 
 A troca de mensagens entre o cliente e o servidor será mediada por um \textbf{Middleware} (ver \ref{img:middleware}).
 Pode-se encontrar um esboço da estratégia analisando o diagrama \ref{img:comunicacao}.
@@ -219,7 +218,7 @@ será possível criar cada um dos pedidos e cada uma das respostas, conforme o c
 Com o objetivo de generalização do código, colocou-se que a classe \textit{DTO} será abstrata e terá como método,
 também este abstrato, a serialização (\textit{serialize}).
 
-\subsection{Servidor}
+\subsubsection{Servidor}
 Dotado de um \textit{ServerSocket}, este será capaz de estabelecer ligação com cada cliente,
 sendo-lhe atribuída uma \textit{Thread} e \textit{Socket} própria, partilhando um estado comum com arquitetura \textbf{Facade}: 
 \mintinline{java}{IFlightManager} (ver \ref{img:flight_manager}).
@@ -252,7 +251,7 @@ pela interface \textit{IFlightManager}.
 Como é habitual neste tipo de estratégias, esta classe permite conjugar métodos relacionados com 
 o \textit{Booking Manager} e o \textit{User Manager}.
 
-\subsection{Cliente}
+\subsubsection{Cliente}
 Em termos estruturais, o cliente apresenta uma lógica bastante mais simples.
 No entanto, por forma a implementar algumas funcionalidades adicionais, nomeadamente
 a possibilidade de efetuar uma reserva sem que se tenha de esperar pela sua conclusão,
@@ -265,7 +264,7 @@ Quer isto dizer que, apesar de haver uma \textit{thread} principal a tratar do i
 e da lógica do cliente, este pode utilizar métodos assincronos, que são executados por 
 outras \textit{threads} que lhe ficam associadas.
 
-\chapter{Implementação}
+\section{Implementação}
 Devido ao curto número de páginas definido pela equipa docente, será apenas abordado alguns pontos
 considerados fulcrais na implementação do sistema proposto.
 
@@ -325,7 +324,7 @@ considerados fulcrais na implementação do sistema proposto.
     
 \end{multicols}
 
-\begin{multicols}{2}[\section{Cliente}]
+\begin{multicols}{2}[\section{Cliente}] \label{sec:cliente}
     Posto a implementação definida no ponto anterior, procedeu-se à implementação
     do \textit{interface} gráfico de interação com o utilizador.
     Atendendo que este não era o foco do projeto, implementou-se uma versão estritamente
@@ -397,8 +396,8 @@ considerados fulcrais na implementação do sistema proposto.
     \end{enumerate}
     Começando pelo último ponto, é permitido que o utilizador termine o servidor a qualquer
     altura. Esta terminação é efetuada de forma eloquente, i.e. começa por fechar a socket
-    de entrada no servidor (não permitindo novas ligações), mas permite que os clientes ligados terminem as suas transações.
-    Apenas quando todos os clientes terminarem as suas transações, o servidor encerrará e gravará 
+    de entrada no servidor (não aceitando novas ligações), mas permite que os clientes ligados terminem as suas transações.
+    Apenas quando todos os clientes fecharem a conexão, o servidor encerrará e gravará 
     o seu estado atual num ficheiro de objetos.
     
     Sempre que um cliente se estabelece ligação com um servidor, é criado uma
@@ -424,8 +423,8 @@ considerados fulcrais na implementação do sistema proposto.
         entry(LoginQueryDTO.class.getSimpleName(), (x) -> this.loginHandler(x))
     \end{minted}
     Desta forma, sempre que o servidor recebe um pedido, para além de escrever um
-    \textit{Log} que permite ter um histórico de pedidos recebidos, é capaz o converter
-    num resultado e responder ao cliente com uma implementação bastante \textit{clean}:
+    \textit{Log} que permite ter um histórico de pedidos recebidos, é capaz de o converter
+    num resultado e responder ao cliente aplicando o método obtido no mapeamento:
     \begin{minted}{java}
 	public void requestHandler(Frame f)  {
 		QueryDTO dto = (QueryDTO) f.getDto();
@@ -433,48 +432,143 @@ considerados fulcrais na implementação do sistema proposto.
 		DTO r = getMapping(method).apply(dto);
 		this.c.send(new Frame(f.tag, r));
 	}
-        
+    \end{minted}
+    Cada um dos métodos utiliza a API definida como \textit{IFlightManager}
+    que é implementada pela \mintinline{java}{class FlightManagerFacade}.
+    Consequentemente ao servidor aceitar pedidos de múltiplos clientes em simultâneo,
+    i.e. haverá concorrência no acesso aos recursos disponibilizados
+    Portanto, houve a necessidade de definir variáveis com acesso crítico, assim
+    como regiões críticas.
+    Para acesso a estas regiões, utilizou-se a classe \textit{ReentrantLock} garantindo
+    o acesso \textit{single-threaded}.
+    Ao implementar a lógica relacionada com a gestão de reservas e utilizadores,
+    identificou-se dois padrões: lógica relacionada apenas com um dos sub-sistemas
+    (\textbf{Utilizadores} ou \textbf{Reservas}) e lógica relacionada com métodos
+    que têm dependencias em ambos.
+    
+    Em ambas as situações, procurou-se utilizar os \textbf{locks} de nível superior
+    durante o menor tempo possível.
+    Assim, começa-se por obter o \textbf{lock} para variáveis gerais e, posteriormente,
+    obtém-se o \textbf{lock} da classe específica, procedendo à libertação do \textbf{lock}
+    anteriormente adquirido.
+    Um exemplo da estratégia utilizada:
+    \begin{minted}{java}
+		this.l.lock();
+		BookingDay bd;
+		try {
+			bd = this.getBookingDay(LocalDate.now());
+			bd.l.lock();
+		} finally {
+			this.l.unlock();
+		}
+		try {
+			bd.closeDay();
+			return true;
+		} finally {
+			bd.l.unlock();
+		}
+    \end{minted}
+    No caso de soluções que dependam de ambos os sub-sistemas, houve necessidade
+    de ser o \textit{Facade} a obter o \textbf{lock} da estrutura de um sistema e,
+    posteriormente, executar o método pretendido no outro sistema.
+    No final, liberta o \textbf{lock} adquirido.
+    Um exemplo de métodos que dependem de ambos os sistemas:
+    \begin{minted}{java}
+		if (users.hasUser(user)) {
+			User u = users.getUser(user);
+			u.lock.lock();
+			String bookId;
+			try {
+				bookId = booking.bookFlight(user, percurso, de, ate);
+				users.addReserva(user, bookId);
+			} finally {
+				u.lock.unlock();
+			}
+			return bookId;
+		}
+		throw new UserNaoExistente(user);
     \end{minted}
 \end{multicols}
 
-\chapter{Considerações Finais}
-\section{Conclusões}
+\begin{multicols}{2}[\section{Funcionalidade Adicional}]
+    Introduziu-se a estratégia de travessia de grafos, permitindo
+    a construção de caminhos entre dois destinos.
+    Neste caso, o caminho foi limitado (conforme indicado no enunciado)
+    a um máximo de 2 paragens, correspondendo a 4 cidades (A\rightarrow B
+    \rightarrow C \rightarrow D).
+    A estrutura de suporte ao grafo é \mintinline{java}{Map<String, List<String>>}
+    que permite, para uma dada origem, saber a lista de destinos possíveis.
+    
+    Sempre que é adicionado um novo destino (vôo), este é adicionado ao grafo.
+    Para garantir o acesso concorrente ao grafo, sem afetar a eficiência do servidor,
+    optou-se por lhe alocar um \textbf{lock} específico.
+    \vspace{1cm}
+    \begin{minted}{java}
+			g.lock();
+			try {
+				if (grafo.containsKey(v.getOrigem())) {
+					List<String> arestas = grafo.get(v.getOrigem());
+					arestas.add(v.getDestino());
+					grafo.put(v.getOrigem(), arestas);
+				} else {
+					List<String> arestas = new ArrayList<>();
+					arestas.add(v.getDestino());
+					grafo.put(v.getOrigem(), arestas);
+				}
+			} finally {
+				g.unlock();
+			}
+    \end{minted}
 
-Ao longo do desenvolvimento do projeto, e com o auxilio da equipa docente para qualquer questão 
-relativa à matéria lecionada e à conceção do trabalho, o grupo foi munido com todos os conceitos
-e materiais necessários para o bom desenvolvimento do sistema, \textit{Flight Manager}.
+    Por último, conforme já abordado no Cliente (ver \ref{sec:cliente}), implementou-se
+    a possibilidade deste realizar pedidos que fiquem em execução em segundo plano,
+    podendo, desta forma, continuar a trabalhar na aplicação sem esperar pela
+    sua conclusão.
+\end{multicols}
 
-A partir de conceitos de outras unidades curriculares, o grupo foi possibilitado a resolver uma 
-solução outrora complexa, a partir de um estruturamento planificado e modelado, usando para tal 
-o sistema de modelação \textit{Visual Paradigm}.
-Este permitiu, muito mais facilmente, fragmentar o que era necessário resolver para colocar o 
-sistema a correr, poupando muito tempo que podia ser perdido, ao construir a aplicação "à mediada
-que fazia".
+\section{Considerações Finais}
+\subsection{Conclusões}
+Com o objetivo de facilitar a implementação do sistema, começou por se efetuar a modelação
+funcional, estrutural e comportamental com recurso à ferramenta \textit{Visual Paradigm}.
+Ao utilizar esta estratégia, permitiu ter uma visão mais abstrata do problema, levando
+a uma solução mais estruturada, escalável e sustentável.
 
-O grupo encontra-se orgulhoso por poder implementar um sistema que não só responde às funcionalidades 
-básicas estabelcidades pela equipa docente, com uma plataforma bem construída do ponto de vista
-de encapsulamento e organização dos vários constituintes.
+Uma das principais dificuldades durante a implementação da solução, deveu-se à decisão de quando 
+e como utilizar os \textit{locks}.
+Para tal, conforme referido, começou por se identificar regiões críticas e fez-se
+um processo de implementação iterativa, i.e. começou por se introduzir \textit{locks}
+ao nível da raíz e procedendo à sua especialização.
 
-Escusado é dizer que muniu todos os participantes com experiência na realização de projetos que sigam 
-os conceitos de \textbf{Sistemas Operativos}, nomeadamente a exclusão mútua, a programação com \textit{sockets} e
-com várias \textit{Threads}.
+Não obstante, a dificuldade indicada, procurou-se que a implementação fosse o mais simples
+e generalizável possível. Para isso, procedeu-se à introdução de um Middleware cujo objeto
+de comunicação fosse facilmente identificável. Este requisito levou à introdução de uma 
+\textit{Frame} que encapsula um \textbf{DTO}, podendo ser especializado como uma \textit{query} ou uma resposta.
 
-\section{Trabalho Futuro}
+Ao nível de controlo de concorrência, pode-se acrescentar que se procurou obedecer
+às regras lecionadas ao longo da UC de Sistemas Distribuídos, nomeadamente
+através da aquisição de \textit{lock} de forma ordenada, assim como a respetiva
+libertação. Esta estratégia foi implementada quando se precisava de adquirir controlo
+sobre várias estruturas em simultâneo.
 
-Apesar de todo o processo de desenvolvimento do sistema \textit{Flight Manager} ter coincidido com as espectativas
-colocadas pelo grupo, e, até permitido adicionar funcionalidades numa tentativa de obter um melhor aproveitamento,
-existem alguns pontos que poderiam ser abordados numa iteração seguinte do \textbf{Flight Manager}.
+\subsection{Trabalho Futuro}
 
-Como qualquer sistema que visa a interação com utilizadores sem conhecimentos dentro da área de informática, o 
-manuseamento de um terminal para utilizar a plataforma pode tornar-se incómodo.
-Dado a aplicação querer satisfazer as necessidades de utilizadores comuns, seria de extrema importância a conceção
-de uma interface com o utilizador intuitiva e simples de usar.
-Assim, um dos problemas seria a criação de uma \textit{framework} conceptual para o \textbf{Flight Manager}.
+Com a perspetiva de melhorar a interação com o cliente, seria uma mais valia fazer
+uma restruturação do \textit{User Interface}.
+Especificamente, através de uma \textit{interface} mais atrativa e utilizável.
+Mediante a nova UI, seria possível que os pedidos que fossem efetuados de forma assincrona,
+apresentassem o seu resultado com uma \textit{pop-up} ou algum tipo de aviso que não interfira
+diretamente com o que o cliente se encontra a fazer. Por exemplo, no sistema desenvolvido,
+caso os pedidos assincronos fossem apresentados mal terminassem, podiam intercalar
+com um \textit{output} que estive a ser exibido.
 
-Outra equívoco seria a adição de mais funcionalidades. 
+Poderia, ainda, introduzir-se persistência através de utilização de \textbf{Bases de Dados}.
+Tal funcionalidade não foi implementada, pelo facto dos elementos do grupo não terem conhecimentos
+sobre esse tipo de sistemas.
+
+Para além destes, será necessário desenvolver mais testes para validar o funcionamento da aplicação.
+
 O aperfeiçoamento da aplicação, de modo a chegar a um estado competitivo para o mercado atual, passaria pela
-implementação de várias e diferentes funcionalidades que o distingue dos restantes produtos análogos.
-
+implementação de várias e diferentes funcionalidades que lhe permitisse ser distinguido dos restantes concorrentes.
 
 \printbibliography
 %==========================================================================
@@ -507,8 +601,8 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 % BEGIN ANEXOS
 %==========================================================================
 
-\addchap{Anexos}
-\addsec{Anexo 1 - Diagrama de Use Case}
+\section{Anexos}
+\subsection{Anexo 1 - Diagrama de Use Case}
 \begin{figure}[!ht]
     \centering
     \includegraphics[scale=0.75]{diagramas/useCaseDiagram.jpg}
@@ -516,7 +610,7 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 \end{figure}
 
 \begin{landscape}
-    \addsec{Anexo 2 - Diagrama de Comunicação}
+    \subsection{Anexo 2 - Diagrama de Comunicação}
     \begin{figure}[!ht]
         \centering
         \includegraphics[width=\linewidth]{diagramas/MiddlewareCommunicationDiagram.jpg}
@@ -525,7 +619,7 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 \end{landscape}
 
 \begin{landscape}
-    \addsec{Anexo 3 - Diagrama de Classes do Middleware}
+    \subsection{Anexo 3 - Diagrama de Classes do Middleware}
     \begin{figure}[!ht]
         \centering
         \includegraphics[width=\linewidth]{diagramas/MiddlewareClassDiagram.jpg}
@@ -534,7 +628,7 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 \end{landscape}
 
 \begin{landscape}
-    \addsec{Anexo 4 - Diagrama de Classes do FlightManager (Servidor)}
+    \subsection{Anexo 4 - Diagrama de Classes do FlightManager (Servidor)}
     \begin{figure}[!ht]
         \centering
         \includegraphics[width=\linewidth]{diagramas/FlightManager.jpg}
@@ -543,7 +637,7 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 \end{landscape}
 
 \begin{landscape}
-    \addsec{Anexo 5 - Diagrama de Classes do Booking Manager (Servidor)}
+    \subsection{Anexo 5 - Diagrama de Classes do Booking Manager (Servidor)}
     \begin{figure}[!ht]
         \centering
         \includegraphics[width=0.9\linewidth]{diagramas/BookingManagerClassDiagram.jpg}
@@ -552,7 +646,7 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 \end{landscape}
 
 \begin{landscape}
-    \addsec{Anexo 6 - Diagrama de Classes do User Manager (Servidor)}
+    \subsection{Anexo 6 - Diagrama de Classes do User Manager (Servidor)}
     \begin{figure}[!ht]
         \centering
         \includegraphics[width=0.75\linewidth]{diagramas/UserManagerClassDiagram.jpg}
@@ -561,7 +655,7 @@ implementação de várias e diferentes funcionalidades que o distingue dos rest
 \end{landscape}
 
 \begin{landscape}
-    \addsec{Anexo 7 - Diagrama Pseudo-Estado Menu de UI}
+    \subsection{Anexo 7 - Diagrama Pseudo-Estado Menu de UI}
     \begin{figure}[!ht]
         \centering
         \includegraphics[scale=0.7]{diagramas/MenuUI.jpg}
