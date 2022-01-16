@@ -101,7 +101,6 @@ public class MenuCliente {
             String[] s = perc.split(",");
             Params params = new Params(s.length);
             params.addAll(s);
-
             BookFlightQueryDTO q = new BookFlightQueryDTO(params, min, max);
             this.c.asyncHandler(q);
             System.out.println("O seu pedido foi efetuado.");

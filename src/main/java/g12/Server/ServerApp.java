@@ -29,6 +29,7 @@ public class ServerApp {
                 t.interrupt();
                 // verificar se o model ainda tem operacoes pendentes
                 s.close();
+                model.saveState();
                 break;
             }
         }
