@@ -349,6 +349,8 @@ considerados fulcrais na implementação do sistema proposto.
     Para além destes, existe ainda um método específico para lidar com o login,
     pois tem a particularidade de definir no cliente o \textbf{token} que recebeu
     do servidor e terá de utilizar nas comunicações futuras.
+    Este método terá de ser utilizado no primeiro pedido ao servidor,
+    sendo o utilizador obrigado a efetuar \textit{login}.
     
     A estratégia utilizada para pedir algo ao servidor corresponde, portanto, à 
     sequência de 3 etapas:
@@ -377,6 +379,7 @@ considerados fulcrais na implementação do sistema proposto.
     pedido efetuado. 
     O sistema remete o cliente para um menu próprio onde pode consultar
     pedidos (de reservas) que estejam concluídos.
+    
 \end{multicols}
 
 \begin{multicols}{2}[\section{Servidor}]
@@ -488,6 +491,16 @@ considerados fulcrais na implementação do sistema proposto.
 		}
 		throw new UserNaoExistente(user);
     \end{minted}
+    
+    Foi, ainda, implementado um sistema de segurança que consiste na construção de um
+    \textit{token} assinado através da \textit{framework} \textbf{JWT}.
+    O token gerado é armazenado na estrutura associada ao próprio utilizador, por forma a
+    validar a origem do pedido.
+    A solução implementada é de fácil ataque, bastando ao ator interessado captar os pacotes,
+    ler o \textit{token} e passar a utilizá-lo nas comunicações.
+    Algo mais completo, seria encriptar os pacotes enviados e gerar um \textit{token} único
+    para cada ligação. A segunda solução é de fácil implementação e o sistema encontra-se
+    preparado para tal. No entanto, este não é o foco do projeto desenvolvido.
 \end{multicols}
 
 \begin{multicols}{2}[\section{Funcionalidade Adicional}]
@@ -564,11 +577,13 @@ com um \textit{output} que estive a ser exibido.
 Poderia, ainda, introduzir-se persistência através de utilização de \textbf{Bases de Dados}.
 Tal funcionalidade não foi implementada, pelo facto dos elementos do grupo não terem conhecimentos
 sobre esse tipo de sistemas.
+Como abordado, seria importante tornar o sistema mais seguro, utilizando ligações encriptadas e \textit{tokens}
+únicos para cada ligação ou com um \textbf{ttl} (\textit{time to live}).
 
 Para além destes, será necessário desenvolver mais testes para validar o funcionamento da aplicação.
 
 O aperfeiçoamento da aplicação, de modo a chegar a um estado competitivo para o mercado atual, passaria pela
-implementação de várias e diferentes funcionalidades que lhe permitisse ser distinguido dos restantes concorrentes.
+implementação de várias e diferentes funcionalidades que lhe permitisse ser distinguida dos restantes concorrentes.
 
 \printbibliography
 %==========================================================================
