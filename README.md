@@ -1,4 +1,4 @@
-# Fight Manager - Server Client Solutions with multi-threaded service
+# Flight Manager - Server Client Solutions with multi-threaded service
 Threaded flight manager
 
 Class: Distributed Systems @UniversityOfMinho
