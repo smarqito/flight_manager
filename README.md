@@ -1,15 +1,16 @@
 # Fight Manager - Server Client Solutions with multi-threaded service
-
-**Description**
 Threaded flight manager
 
-**Context**
-Distributed Systems @UniversityOfMinho
+Class: Distributed Systems @UniversityOfMinho
 
-**Languages**
-Unified Modeling Language (UML)
+Language: *JAVA*, UML
 
-Java
 
-**Academic Classification**
-20 (out of 20)
+# Authors
+
++ Marco Sousa, https://www.linkedin.com/in/marco-antonio-sousa/
++ José Malheiro
++ Miguel Fernandes, https://www.linkedin.com/in/miguel-fernandes-26526623a/
+
+# Grade:
+20/20
